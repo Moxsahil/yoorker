@@ -1,0 +1,19 @@
+name: Promote guard
+
+on:
+  pull_request:
+    branches: [production]
+
+jobs:
+  promote-guard:
+    name: promote-guard
+    runs-on: ubuntu-latest
+    steps:
+      - name: Only main or hotfix/* may be merged into production
+        run: |
+          HEAD_REF="${{ github.head_ref }}"
+          if [ "$HEAD_REF" != "main" ] && [[ "$HEAD_REF" != hotfix/* ]]; then
+            echo "::error::PRs into production must come from 'main' or 'hotfix/*' (got '$HEAD_REF')"
+            exit 1
+          fi
+          echo "OK: promoting from $HEAD_REF"
