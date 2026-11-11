@@ -30,7 +30,8 @@ jobs:
 
   commitlint:
     name: commitlint
-    if: github.event_name == 'pull_request'
+    # Skip Dependabot: its commit bodies contain long URLs that break body-max-line-length.
+    if: github.event_name == 'pull_request' && github.actor != 'dependabot[bot]'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
