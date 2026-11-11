@@ -17,8 +17,8 @@
   "devDependencies": {
     "@types/react": "^19.0.2",
     "@types/react-dom": "^19.0.2",
-    "@vitejs/plugin-react": "^4.3.4",
+    "@vitejs/plugin-react": "^6.3.0",
     "@yoorker/config": "workspace:*",
-    "vite": "^6.0.6"
+    "vite": "^8.3.7"
   }
 }
