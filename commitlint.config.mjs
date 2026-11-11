@@ -1,5 +1,6 @@
 export default {
   extends: ["@commitlint/config-conventional"],
+  ignores: [(message) => /^chore\(deps(-dev)?\): bump/.test(message)],
   rules: {
     "scope-enum": [
       2,
@@ -17,6 +18,7 @@ export default {
         "docs",
         "ci",
         "deps",
+        "deps-dev",
         "repo",
       ],
     ],
