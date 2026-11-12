@@ -61,10 +61,17 @@ Booking changes `NOTIFY slot_changed`; the API fans out over SSE to open venue p
 
 ## Environments
 
-local (docker compose) · staging · production — AWS ap-south-1 (RDS + ECS Fargate),
-Vercel for web. Terraform in `infra/terraform`.
+| Environment             | Database                          | API                    | Web          | Dashboard        |
+| ----------------------- | --------------------------------- | ---------------------- | ------------ | ---------------- |
+| local                   | Docker Compose (PostGIS)          | `pnpm dev`             | `pnpm dev`   | `pnpm dev`       |
+| staging (until pilot)   | Supabase Free, Singapore          | Render Free, Singapore | Vercel Hobby | Cloudflare Pages |
+| production (from pilot) | Decided in Sprint 4, see ADR-0006 |                        |              |                  |
+
+Hosting is free until the pilot (ADR-0006). The AWS Mumbai Terraform in `infra/terraform` is
+kept for later and not applied.
 
 ## Open questions
 
-- Dashboard host: Vercel vs Cloudflare Pages
+- ~~Dashboard host: Vercel vs Cloudflare Pages~~ → Cloudflare Pages (ADR-0006)
+- Production hosting from the pilot: stay on free-tier hosts' paid plans, or move to AWS Mumbai (decide in Sprint 4)
 - WhatsApp BSP choice

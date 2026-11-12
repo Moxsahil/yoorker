@@ -1,5 +1,9 @@
 # Infrastructure (Terraform)
 
+> **Not applied yet.** Until the pilot, Yoorker runs on free tiers (Supabase, Render, Vercel,
+> Cloudflare). See [ADR-0006](../../docs/adr/0006-zero-cost-hosting-until-pilot.md). This
+> Terraform is kept for a later move to AWS Mumbai.
+
 AWS ap-south-1 (Mumbai): VPC, RDS PostgreSQL 16, ECR, ECS Fargate.
 Cloudflare: R2 buckets.
 
