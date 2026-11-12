@@ -28,8 +28,10 @@ identity · venues · pricing · availability · booking · payments · ledger �
 
 ## Data model (first cut)
 
-- `organisation`, `user`, `membership(role: OWNER|MANAGER|STAFF|PLAYER)`
-- `venue(location geography(Point))`, `court(sport, surface, capacity, active)`
+- `organisation`, `app_user` (`user` is reserved in Postgres), `membership(role: OWNER|MANAGER|STAFF)`;
+  a player is any signed-in user and has no membership row
+- `venue(location geography(Point))`, `venue_photo`, `court(sports[], surface, capacity, active)`;
+  one court can host several sports (box cricket and football)
 - `price_rule(kind, priority, days, start, end, amount_paise)`, `blackout(court_id, during)`
 - `booking(court_id, during tstzrange, status, source, idempotency_key, hold_expires_at)`
 - `payment(razorpay_order_id, razorpay_payment_id, status, amount_paise)`
