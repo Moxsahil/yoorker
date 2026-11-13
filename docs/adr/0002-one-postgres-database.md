@@ -11,7 +11,8 @@ distributed-consistency work one engineer cannot afford.
 
 ## Decision
 
-Use a single PostgreSQL 16 instance (AWS RDS, ap-south-1) with `btree_gist` and `postgis`.
+Use a single PostgreSQL instance with `btree_gist` and `postgis`. Where it runs is decided
+in ADR-0006 (Supabase until the pilot; AWS RDS Mumbai remains the long-term option).
 Background jobs use pg-boss (queue in Postgres); live updates use LISTEN/NOTIFY → SSE;
 events use an outbox table. Access via Kysely + plain SQL migrations.
 

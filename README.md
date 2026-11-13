@@ -7,15 +7,15 @@ link in under 60 seconds; owners run online bookings, walk-ins and cash from one
 
 ## Stack
 
-| Layer           | Choice                                                              |
-| --------------- | ------------------------------------------------------------------- |
-| Player web      | Next.js (App Router), PWA                                           |
-| Owner dashboard | React + Vite, TanStack Router + Query                               |
-| API             | NestJS (Express), modular monolith                                  |
-| Database        | PostgreSQL 16 + PostGIS + btree_gist, Kysely                        |
-| Jobs / live     | pg-boss, LISTEN/NOTIFY → SSE                                        |
-| Payments        | Razorpay (UPI, webhooks, Route)                                     |
-| Infra           | AWS ap-south-1 (RDS, ECS Fargate), Vercel, Cloudflare R2, Terraform |
+| Layer           | Choice                                                                                                                             |
+| --------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| Player web      | Next.js (App Router), PWA                                                                                                          |
+| Owner dashboard | React + Vite, TanStack Router + Query                                                                                              |
+| API             | NestJS (Express), modular monolith                                                                                                 |
+| Database        | PostgreSQL 16 + PostGIS + btree_gist, Kysely                                                                                       |
+| Jobs / live     | pg-boss, LISTEN/NOTIFY → SSE                                                                                                       |
+| Payments        | Razorpay (UPI, webhooks, Route)                                                                                                    |
+| Hosting         | Supabase, Render, Vercel, Cloudflare Pages + R2 (free until pilot, see [ADR-0006](docs/adr/0006-zero-cost-hosting-until-pilot.md)) |
 
 ## Repo layout
 
@@ -28,7 +28,7 @@ packages/contracts  Zod API contracts
 packages/db         Kysely + SQL migrations
 packages/tokens     Design tokens
 packages/ui         Shared UI components
-infra/terraform     AWS + Cloudflare infrastructure
+infra/terraform     AWS + Cloudflare infrastructure (deferred, see ADR-0006)
 docs/               PRD, RFCs, ADRs, runbooks
 ```
 

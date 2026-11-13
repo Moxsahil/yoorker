@@ -53,4 +53,5 @@ A player opens a WhatsApp link, picks a slot and pays by UPI in under 60 seconds
 
 ## Open questions
 
-- Dashboard host: Vercel or Cloudflare Pages (decide before Sprint 1)
+- ~~Dashboard host: Vercel or Cloudflare Pages~~ → Cloudflare Pages (ADR-0006)
+- Production hosting from the pilot (decide in Sprint 4, see ADR-0006)
