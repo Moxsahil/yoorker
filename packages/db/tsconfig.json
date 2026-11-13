@@ -1,5 +1,5 @@
 {
   "extends": "@yoorker/config/tsconfig.base.json",
-  "compilerOptions": { "lib": ["ES2022", "DOM"], "jsx": "react-jsx" },
-  "include": ["src"]
+  "compilerOptions": { "types": ["node"] },
+  "include": ["src", "vitest.config.ts"]
 }
