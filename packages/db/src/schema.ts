@@ -11,7 +11,6 @@ type Geography = string;
 /** jsonb written once (audit log). */
 type JsonSnapshot = ColumnType<unknown, object | null | undefined, never>;
 
-// Keep these lists in sync with migrations; schema.test.ts checks the enums.
 export const MEMBER_ROLES = ["OWNER", "MANAGER", "STAFF"] as const;
 export type MemberRole = (typeof MEMBER_ROLES)[number];
 
@@ -105,6 +104,30 @@ export interface AuditLogTable {
   created_at: CreatedAt;
 }
 
+export interface OtpChallengeTable {
+  id: Generated<string>;
+  phone: string;
+  /** HMAC-SHA256 of the code, keyed with OTP_HASH_SECRET and the challenge id. */
+  code_hash: string;
+  attempts: Generated<number>;
+  request_ip: Nullable<string>;
+  expires_at: Date;
+  consumed_at: Nullable<Date>;
+  created_at: CreatedAt;
+}
+
+export interface UserSessionTable {
+  id: Generated<string>;
+  user_id: string;
+  /** SHA-256 of the cookie token. The token itself is never stored. */
+  token_hash: string;
+  user_agent: Nullable<string>;
+  ip: Nullable<string>;
+  created_at: CreatedAt;
+  expires_at: Date;
+  revoked_at: Nullable<Date>;
+}
+
 export interface Database {
   app_user: AppUserTable;
   organisation: OrganisationTable;
@@ -113,4 +136,6 @@ export interface Database {
   venue_photo: VenuePhotoTable;
   court: CourtTable;
   audit_log: AuditLogTable;
+  otp_challenge: OtpChallengeTable;
+  user_session: UserSessionTable;
 }

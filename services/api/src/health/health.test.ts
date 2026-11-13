@@ -14,7 +14,14 @@ beforeAll(async () => {
   t = await startTestDatabase();
   const moduleRef = await Test.createTestingModule({ imports: [AppModule] })
     .overrideProvider(ENV)
-    .useValue(loadEnv({ NODE_ENV: "test", LOG_LEVEL: "silent", DATABASE_URL: t.connectionString }))
+    .useValue(
+      loadEnv({
+        NODE_ENV: "test",
+        LOG_LEVEL: "silent",
+        DATABASE_URL: t.connectionString,
+        OTP_HASH_SECRET: "test-otp-secret-0123456789abcdef0123",
+      }),
+    )
     .compile();
   app = moduleRef.createNestApplication();
   await app.init();
