@@ -15,4 +15,11 @@ export default tseslint.config(
   js.configs.recommended,
   ...tseslint.configs.recommended,
   { languageOptions: { globals: { ...globals.node, ...globals.browser } } },
+  {
+    files: ["**/*.cjs"],
+    languageOptions: {
+      sourceType: "commonjs",
+    },
+    rules: { "@typescript-eslint/no-require-imports": "off" },
+  },
 );
