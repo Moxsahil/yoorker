@@ -4,17 +4,25 @@
   "private": true,
   "type": "module",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./testing": "./src/testing.ts"
   },
   "scripts": {
     "lint": "eslint .",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "migrate": "tsx src/migrate-cli.ts"
   },
   "dependencies": {
     "kysely": "^0.29.8",
     "pg": "^8.13.1"
   },
   "devDependencies": {
-    "@yoorker/config": "workspace:*"
+    "@testcontainers/postgresql": "^12.2.1",
+    "@types/node": "^22.10.2",
+    "@types/pg": "^8.23.1",
+    "@yoorker/config": "workspace:*",
+    "tsx": "^4.23.15",
+    "vitest": "^5.1.0"
   }
 }

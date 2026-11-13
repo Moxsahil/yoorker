@@ -13,8 +13,9 @@
     "test": "turbo run test",
     "check": "turbo run lint typecheck test build",
     "format": "prettier --write .",
-    "db:up": "docker compose up -d db",
-    "prepare": "husky"
+    "db:up": "docker compose up -d --wait db",
+    "prepare": "husky",
+    "db:migrate": "pnpm --filter @yoorker/db migrate"
   },
   "devDependencies": {
     "@commitlint/cli": "^21.2.4",
