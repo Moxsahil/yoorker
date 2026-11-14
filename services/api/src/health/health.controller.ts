@@ -3,7 +3,9 @@ import type { HealthResponse } from "@yoorker/contracts";
 import type { Db } from "@yoorker/db";
 import { sql } from "kysely";
 import { DB } from "../database/database.module";
+import { Public } from "../auth/public.decorator";
 
+@Public()
 @Controller("health")
 export class HealthController {
   constructor(@Inject(DB) private readonly db: Db) {}
