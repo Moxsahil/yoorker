@@ -1,4 +1,6 @@
 export * from "./auth";
+export * from "./venues";
+
 import { z } from "zod";
 
 export const healthResponseSchema = z.object({
