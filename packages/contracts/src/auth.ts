@@ -26,11 +26,36 @@ export const otpVerifySchema = z.object({
 });
 export type OtpVerify = z.infer<typeof otpVerifySchema>;
 
+/** POST /auth/google. The ID token ("credential") from Google Identity Services. */
+export const googleSignInSchema = z.object({
+  idToken: z.string().min(1).max(4096),
+});
+export type GoogleSignIn = z.infer<typeof googleSignInSchema>;
+
+/** PATCH /auth/me. A number typed in here is saved as unverified (ADR-0007). */
+export const updateProfileSchema = z
+  .object({
+    name: z.string().trim().min(1, "Enter your name").max(100).optional(),
+    phone: phoneSchema.optional(),
+  })
+  .refine((body) => body.name !== undefined || body.phone !== undefined, {
+    message: "Nothing to update",
+  });
+export type UpdateProfile = z.infer<typeof updateProfileSchema>;
+
 export const memberRoleSchema = z.enum(["OWNER", "MANAGER", "STAFF"]);
 
-/** Returned by POST /auth/otp/verify and GET /auth/me. */
+/** Returned by sign-in, GET /auth/me and PATCH /auth/me. */
 export const meResponseSchema = z.object({
-  user: z.object({ id: z.uuid(), phone: z.string(), name: z.string().nullable() }),
+  user: z.object({
+    id: z.uuid(),
+    name: z.string().nullable(),
+    email: z.string().nullable(),
+    /** Null until the user types a number in. Clients ask for one when it is null. */
+    phone: z.string().nullable(),
+    /** True only after a phone OTP. A typed-in number stays false. */
+    phoneVerified: z.boolean(),
+  }),
   memberships: z.array(z.object({ organisationId: z.uuid(), role: memberRoleSchema })),
 });
 export type MeResponse = z.infer<typeof meResponseSchema>;

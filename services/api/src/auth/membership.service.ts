@@ -10,7 +10,8 @@ export class MembershipService {
   async me(userId: string): Promise<MeResponse> {
     const user = await this.db
       .selectFrom("app_user")
-      .select(["id", "phone", "name"])
+      .select(["id", "name", "email", "phone", "phone_verified_at"])
+
       .where("id", "=", userId)
       .executeTakeFirstOrThrow();
     const memberships = await this.db
@@ -19,7 +20,16 @@ export class MembershipService {
       .where("user_id", "=", userId)
       .orderBy("created_at")
       .execute();
-    return { user, memberships };
+    return {
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        phone: user.phone,
+        phoneVerified: user.phone_verified_at !== null,
+      },
+      memberships,
+    };
   }
 
   /**

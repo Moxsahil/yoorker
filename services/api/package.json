@@ -17,6 +17,7 @@
     "@yoorker/contracts": "workspace:*",
     "@yoorker/db": "workspace:*",
     "cookie-parser": "^1.4.7",
+    "google-auth-library": "11.3.2",
     "kysely": "^0.29.8",
     "nestjs-pino": "^5.3.1",
     "pg": "^8.13.1",

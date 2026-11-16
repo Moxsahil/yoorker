@@ -119,10 +119,12 @@ export class OtpService {
       throw new UnauthorizedException({ message: "Invalid or expired code", attemptsLeft: 0 });
     }
 
+    // A completed OTP proves the number. A number a Google user only typed in doesn't count
+    // (ADR-0007); linking the two accounts comes with the phone OTP launch.
     const inserted = await this.db
       .insertInto("app_user")
-      .values({ phone: challenge.phone })
-      .onConflict((oc) => oc.column("phone").doNothing())
+      .values({ phone: challenge.phone, phone_verified_at: sql<Date>`now()` })
+      .onConflict((oc) => oc.column("phone").where("phone_verified_at", "is not", null).doNothing())
       .returning("id")
       .executeTakeFirst();
     if (inserted) return inserted.id;
@@ -131,6 +133,7 @@ export class OtpService {
       .selectFrom("app_user")
       .select("id")
       .where("phone", "=", challenge.phone)
+      .where("phone_verified_at", "is not", null)
       .executeTakeFirstOrThrow();
     return existing.id;
   }
