@@ -79,6 +79,7 @@ describe("auth", () => {
     expect(setCookie).toMatch(/HttpOnly/i);
     expect(setCookie).toMatch(/SameSite=Lax/i);
     expect(meResponseSchema.parse(body).user.phone).toBe("+919876543210");
+    expect(meResponseSchema.parse(body).user.phoneVerified).toBe(true);
 
     const me = await http().get("/auth/me").set("Cookie", cookie).expect(200);
     expect(me.body.user.phone).toBe("+919876543210");

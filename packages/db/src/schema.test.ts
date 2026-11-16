@@ -1,7 +1,7 @@
 import { sql } from "kysely";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { point } from "./geo";
-import { COURT_SURFACES, MEMBER_ROLES } from "./schema";
+import { COURT_SURFACES, MEMBER_ROLES, IDENTITY_PROVIDERS } from "./schema";
 import { startTestDatabase, type TestDatabase } from "./testing";
 
 let t: TestDatabase;
@@ -48,6 +48,7 @@ describe("schema", () => {
   it("keeps TypeScript enum lists in sync with Postgres", async () => {
     expect(await enumValues("member_role")).toEqual([...MEMBER_ROLES]);
     expect(await enumValues("court_surface")).toEqual([...COURT_SURFACES]);
+    expect(await enumValues("identity_provider")).toEqual([...IDENTITY_PROVIDERS]);
   });
 
   it("accepts E.164 phone numbers and rejects anything else", async () => {
@@ -55,9 +56,52 @@ describe("schema", () => {
     await expect(
       t.db.insertInto("app_user").values({ phone: "9876543210" }).execute(),
     ).rejects.toThrow(/app_user_phone_e164/);
+  });
+
+  it("makes a phone number unique only once it is verified", async () => {
+    const phone = "+919812345678";
+    // Two people can type the same number; neither has proved it.
+    await t.db.insertInto("app_user").values({ phone }).execute();
+    await t.db.insertInto("app_user").values({ phone }).execute();
+    await t.db
+      .insertInto("app_user")
+      .values({ phone, phone_verified_at: sql<Date>`now()` })
+      .execute();
     await expect(
-      t.db.insertInto("app_user").values({ phone: "+919876543210" }).execute(),
-    ).rejects.toThrow(/app_user_phone_unique/);
+      t.db
+        .insertInto("app_user")
+        .values({ phone, phone_verified_at: sql<Date>`now()` })
+        .execute(),
+    ).rejects.toThrow(/app_user_verified_phone_unique/);
+    await expect(
+      t.db
+        .insertInto("app_user")
+        .values({ phone_verified_at: sql<Date>`now()` })
+        .execute(),
+    ).rejects.toThrow(/app_user_phone_verified_needs_phone/);
+  });
+
+  it("allows a user with no phone and rejects malformed emails", async () => {
+    await t.db
+      .insertInto("app_user")
+      .values({ email: "rohan@example.com", email_verified_at: sql<Date>`now()` })
+      .execute();
+    await expect(
+      t.db.insertInto("app_user").values({ email: "Rohan@Example.com" }).execute(),
+    ).rejects.toThrow(/app_user_email_format/);
+  });
+
+  it("links one Google account to only one user", async () => {
+    const user = await t.db
+      .insertInto("app_user")
+      .values({ email: "amit@example.com" })
+      .returning("id")
+      .executeTakeFirstOrThrow();
+    const identity = { user_id: user.id, provider: "GOOGLE" as const, subject: "google-sub-1" };
+    await t.db.insertInto("user_identity").values(identity).execute();
+    await expect(t.db.insertInto("user_identity").values(identity).execute()).rejects.toThrow(
+      /user_identity_provider_subject_unique/,
+    );
   });
 
   it("rejects two courts with the same name at one venue", async () => {

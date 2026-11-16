@@ -34,9 +34,15 @@ export const COURT_SURFACES = [
 ] as const;
 export type CourtSurface = (typeof COURT_SURFACES)[number];
 
+export const IDENTITY_PROVIDERS = ["GOOGLE"] as const;
+export type IdentityProvider = (typeof IDENTITY_PROVIDERS)[number];
+
 export interface AppUserTable {
   id: Generated<string>;
-  phone: string;
+  phone: Nullable<string>; //TODO: Consider making this non-nullable if phone is required for all users.
+  phone_verified_at: Nullable<Date>;
+  email: Nullable<string>;
+  email_verified_at: Nullable<Date>;
   name: Nullable<string>;
   created_at: CreatedAt;
   updated_at: UpdatedAt;
@@ -128,6 +134,15 @@ export interface UserSessionTable {
   revoked_at: Nullable<Date>;
 }
 
+export interface UserIdentityTable {
+  id: Generated<string>;
+  user_id: string;
+  provider: IdentityProvider;
+  subject: string;
+  created_at: CreatedAt;
+  last_used_at: Generated<Date>;
+}
+
 export interface Database {
   app_user: AppUserTable;
   organisation: OrganisationTable;
@@ -138,4 +153,5 @@ export interface Database {
   audit_log: AuditLogTable;
   otp_challenge: OtpChallengeTable;
   user_session: UserSessionTable;
+  user_identity: UserIdentityTable;
 }

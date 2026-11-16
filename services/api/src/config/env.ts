@@ -1,13 +1,35 @@
 import { z } from "zod";
 
-const envSchema = z.object({
-  NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
-  API_PORT: z.coerce.number().int().positive().default(4000),
-  DATABASE_URL: z.url(),
-  LOG_LEVEL: z.enum(["fatal", "error", "warn", "info", "debug", "trace", "silent"]).default("info"),
-  OTP_HASH_SECRET: z.string().min(32, "OTP_HASH_SECRET must be at least 32 characters"),
-  TRUST_PROXY_HOPS: z.coerce.number().int().min(0).max(3).default(0),
-});
+const envSchema = z
+  .object({
+    NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
+    API_PORT: z.coerce.number().int().positive().default(4000),
+    DATABASE_URL: z.url(),
+    LOG_LEVEL: z
+      .enum(["fatal", "error", "warn", "info", "debug", "trace", "silent"])
+      .default("info"),
+    OTP_HASH_SECRET: z.string().min(32, "OTP_HASH_SECRET must be at least 32 characters"),
+    TRUST_PROXY_HOPS: z.coerce.number().int().min(0).max(3).default(0),
+    /** OAuth client IDs whose Google ID tokens we accept, comma-separated (web now, apps later). */
+    GOOGLE_CLIENT_IDS: z
+      .string()
+      .default("")
+      .transform((raw) =>
+        raw
+          .split(",")
+          .map((id) => id.trim())
+          .filter((id) => id.length > 0),
+      ),
+    /** Phone OTP sign-in. Off in production by default: the log sender only prints codes (ADR-0007). */
+    PHONE_OTP_ENABLED: z.enum(["true", "false"]).optional(),
+  })
+  .transform(({ PHONE_OTP_ENABLED, ...env }) => ({
+    ...env,
+    PHONE_OTP_ENABLED:
+      PHONE_OTP_ENABLED === undefined
+        ? env.NODE_ENV !== "production"
+        : PHONE_OTP_ENABLED === "true",
+  }));
 
 export type Env = z.infer<typeof envSchema>;
 
