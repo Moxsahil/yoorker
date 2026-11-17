@@ -4,6 +4,7 @@ One file per incident type. Each runbook has: **Symptoms → Check → Fix → V
 
 | Runbook            | Sprint | Status |
 | ------------------ | ------ | ------ |
+| staging.md         | 0      | Done   |
 | failed-payments.md | 4      | TODO   |
 | webhook-backlog.md | 4      | TODO   |
 | database-down.md   | 4      | TODO   |
