@@ -3,6 +3,7 @@
 - **Status:** Accepted
 - **Date:** 2026-11-11
 - **Amends:** ADR-0002 (where Postgres runs), RFC-001 § Environments, TURF-006
+- **Updated:** 2026-11-17: bought `yoorker.com`; staging runs on its subdomains
 
 ## Context
 
@@ -25,17 +26,23 @@ The hosting still has to meet these requirements:
 
 Until the pilot, run everything on free tiers:
 
-| Part                  | Host                                                  | URL / region                 |
-| --------------------- | ----------------------------------------------------- | ---------------------------- |
-| Postgres + PostGIS    | Supabase Free                                         | Singapore (`ap-southeast-1`) |
-| API (NestJS)          | Render Free web service                               | Singapore, `*.onrender.com`  |
-| Player web (Next.js)  | Vercel Hobby                                          | `*.vercel.app`               |
-| Owner dashboard       | Cloudflare Pages                                      | `*.pages.dev`                |
-| Files                 | Cloudflare R2 (free tier)                             | unchanged (ADR-0005)         |
-| Payments              | Razorpay test mode                                    | —                            |
-| WhatsApp OTP/messages | Meta WhatsApp Cloud API test number                   | no BSP during development    |
-| SMS fallback          | Not used in development; dev OTP is logged by the API | DLT deferred                 |
-| Domain                | Free subdomains; `yoorker.com` optional               | —                            |
+| Part                  | Host                                                  | URL / region                         |
+| --------------------- | ----------------------------------------------------- | ------------------------------------ |
+| Postgres + PostGIS    | Supabase Free                                         | Singapore (`ap-southeast-1`)         |
+| API (NestJS)          | Render Free web service                               | Singapore, `staging-api.yoorker.com` |
+| Player web (Next.js)  | Vercel Hobby                                          | `staging.yoorker.com`                |
+| Owner dashboard       | Cloudflare Pages                                      | `staging-app.yoorker.com`            |
+| Files                 | Cloudflare R2 (free tier)                             | unchanged (ADR-0005)                 |
+| Payments              | Razorpay test mode                                    | —                                    |
+| WhatsApp OTP/messages | Meta WhatsApp Cloud API test number                   | no BSP during development            |
+| SMS fallback          | Not used in development; dev OTP is logged by the API | DLT deferred                         |
+| Domain + DNS          | `yoorker.com`, Cloudflare Registrar and DNS           | —                                    |
+
+All three apps sit under `yoorker.com`, so the dashboard and the API are the same site and the
+`SameSite=Lax` session cookie works between them. The free `*.pages.dev` and `*.onrender.com`
+names are different sites, where the cookie would not be sent. Records for Render and Vercel
+are DNS-only so those hosts can issue their own certificates. See
+`docs/runbooks/staging.md` for the full setup.
 
 The API and the database stay in the same region (Singapore) to keep query latency low.
 The API connects through Supabase's **Session pooler** (port 5432), never the Transaction
@@ -70,7 +77,8 @@ These become required once real money flows:
 - [ ] Supabase → **Pro** (no pausing, daily backups)
 - [ ] API → an always-on paid instance (Render Starter or Fly.io)
 - [ ] `apps/web` → a host that allows commercial use
-- [ ] Register `yoorker.com` and put the booking link on it
+- [x] Register `yoorker.com` (done 2026-11-17); put the booking link on it
+- [ ] Verify the database certificate (`sslmode=verify-full`); staging uses `no-verify`
 - [ ] Production environment: separate database, live Razorpay keys, approved WhatsApp
       templates
 - [ ] Revisit this ADR: stay on these hosts, or move to AWS Mumbai with the existing Terraform

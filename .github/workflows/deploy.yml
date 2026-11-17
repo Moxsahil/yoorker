@@ -1,21 +1,76 @@
 name: Deploy
 
+# Staging deploys every commit on main that passed CI (TURF-006, ADR-0006):
+#   1. run database migrations against Supabase
+#   2. ask Render to deploy that exact commit (deploy hook with ?ref=<sha>)
+#   3. wait until https://staging-api.yoorker.com/health reports that commit
+# The dashboard (Cloudflare Pages) and website (Vercel) deploy themselves from main.
+# Production gets its own job when production hosting exists (Sprint 4).
 on:
-  push:
-    branches: [main, production]
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch: # manual redeploy of main from the Actions tab
 
 concurrency:
-  group: deploy-${{ github.ref_name }}
+  group: deploy-staging
   cancel-in-progress: false
 
+permissions:
+  contents: read
+
 jobs:
-  deploy:
-    name: deploy-${{ github.ref_name == 'production' && 'production' || 'staging' }}
+  deploy-staging:
+    name: deploy-staging
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.workflow_run.conclusion == 'success' &&
+       github.event.workflow_run.event == 'push')
     runs-on: ubuntu-latest
-    environment: ${{ github.ref_name == 'production' && 'production' || 'staging' }}
+    timeout-minutes: 25
+    environment:
+      name: staging
+      url: https://staging-api.yoorker.com/health
+    env:
+      SHA: ${{ github.event.workflow_run.head_sha || github.sha }}
+      API_URL: https://staging-api.yoorker.com
     steps:
       - uses: actions/checkout@v7
-      - name: Deploy
+        with:
+          ref: ${{ env.SHA }}
+
+      - uses: pnpm/action-setup@v6
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      # Migrations run before the new code goes live, so each one must also work with the
+      # version that is still running (add columns and tables first, drop them a release later).
+      - name: Migrate staging database
+        env:
+          DATABASE_URL: ${{ secrets.STAGING_DATABASE_URL }}
+        run: pnpm db:migrate
+
+      - name: Trigger Render deploy
+        env:
+          HOOK_URL: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
+        run: curl --fail --silent --show-error --request POST "${HOOK_URL}&ref=${SHA}" --output /dev/null
+
+      - name: Wait for the new version on /health
         run: |
-          echo "Deploying ${{ github.sha }} to ${{ github.ref_name == 'production' && 'production' || 'staging' }}"
-          # TODO (TURF-006): build image → push to ECR → update ECS service
+          for attempt in $(seq 1 60); do
+            live=$(curl --silent --max-time 60 "${API_URL}/health" | jq -r '.version // empty' 2>/dev/null || true)
+            if [ "$live" = "$SHA" ]; then
+              echo "Live on staging: $SHA"
+              exit 0
+            fi
+            echo "Attempt $attempt: live version is '${live:-unreachable}', waiting for $SHA"
+            sleep 15
+          done
+          echo "::error::$SHA was not live on staging after 15 minutes. Check the Render deploy logs."
+          exit 1
