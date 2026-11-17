@@ -2,13 +2,17 @@ import { Controller, Get, Inject, ServiceUnavailableException } from "@nestjs/co
 import type { HealthResponse } from "@yoorker/contracts";
 import type { Db } from "@yoorker/db";
 import { sql } from "kysely";
-import { DB } from "../database/database.module";
 import { Public } from "../auth/public.decorator";
+import { ENV, type Env } from "../config/env";
+import { DB } from "../database/database.module";
 
 @Public()
 @Controller("health")
 export class HealthController {
-  constructor(@Inject(DB) private readonly db: Db) {}
+  constructor(
+    @Inject(DB) private readonly db: Db,
+    @Inject(ENV) private readonly env: Env,
+  ) {}
 
   @Get()
   async check(): Promise<HealthResponse> {
@@ -17,6 +21,12 @@ export class HealthController {
     } catch {
       throw new ServiceUnavailableException({ status: "error", db: "unreachable" });
     }
-    return { status: "ok", service: "api", db: "ok", time: new Date().toISOString() };
+    return {
+      status: "ok",
+      service: "api",
+      db: "ok",
+      version: this.env.VERSION,
+      time: new Date().toISOString(),
+    };
   }
 }

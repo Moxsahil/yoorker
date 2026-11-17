@@ -1,5 +1,14 @@
 import { z } from "zod";
 
+function isOrigin(value: string): boolean {
+  try {
+    const url = new URL(value);
+    return (url.protocol === "https:" || url.protocol === "http:") && url.origin === value;
+  } catch {
+    return false;
+  }
+}
+
 const envSchema = z
   .object({
     NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
@@ -20,11 +29,34 @@ const envSchema = z
           .map((id) => id.trim())
           .filter((id) => id.length > 0),
       ),
+    /**
+     * Browser origins allowed to call the API with the session cookie, comma-separated,
+     * e.g. https://staging-app.yoorker.com. Empty means no cross-origin access.
+     */
+    CORS_ORIGINS: z
+      .string()
+      .default("")
+      .transform((raw) =>
+        raw
+          .split(",")
+          .map((origin) => origin.trim())
+          .filter((origin) => origin.length > 0),
+      )
+      .pipe(
+        z.array(
+          z.string().refine(isOrigin, {
+            message: "Each CORS origin must be scheme://host[:port] with no path or trailing slash",
+          }),
+        ),
+      ),
+    /** Set by Render to the deployed commit; reported by /health so deploys can be confirmed. */
+    RENDER_GIT_COMMIT: z.string().optional(),
     /** Phone OTP sign-in. Off in production by default: the log sender only prints codes (ADR-0007). */
     PHONE_OTP_ENABLED: z.enum(["true", "false"]).optional(),
   })
-  .transform(({ PHONE_OTP_ENABLED, ...env }) => ({
+  .transform(({ PHONE_OTP_ENABLED, RENDER_GIT_COMMIT, ...env }) => ({
     ...env,
+    VERSION: RENDER_GIT_COMMIT ?? "dev",
     PHONE_OTP_ENABLED:
       PHONE_OTP_ENABLED === undefined
         ? env.NODE_ENV !== "production"

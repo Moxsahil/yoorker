@@ -35,7 +35,9 @@ afterAll(async () => {
 describe("GET /health", () => {
   it("reports ok when the database answers", async () => {
     const res = await request(app.getHttpServer()).get("/health").expect(200);
-    expect(healthResponseSchema.parse(res.body).db).toBe("ok");
+    const body = healthResponseSchema.parse(res.body);
+    expect(body.db).toBe("ok");
+    expect(body.version).toBe("dev");
   });
 
   it("echoes a safe x-request-id and generates one otherwise", async () => {

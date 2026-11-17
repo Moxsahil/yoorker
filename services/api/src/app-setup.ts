@@ -7,6 +7,18 @@ export function configureApp(app: NestExpressApplication, env: Env): void {
   // Per-IP OTP limits depend on this being exactly the number of proxies.
   app.set("trust proxy", env.TRUST_PROXY_HOPS > 0 ? env.TRUST_PROXY_HOPS : false);
   app.disable("x-powered-by");
+  // The dashboard runs on its own subdomain (staging-app.yoorker.com) and sends the
+  // session cookie with every call. Only listed origins may read responses.
+  if (env.CORS_ORIGINS.length > 0) {
+    app.enableCors({
+      origin: env.CORS_ORIGINS,
+      credentials: true,
+      methods: ["GET", "POST", "PATCH", "PUT", "DELETE"],
+      allowedHeaders: ["Content-Type", "X-Request-Id"],
+      exposedHeaders: ["X-Request-Id"],
+      maxAge: 600,
+    });
+  }
   app.use(cookieParser());
   app.enableShutdownHooks();
 }
