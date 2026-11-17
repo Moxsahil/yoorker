@@ -21,4 +21,27 @@ describe("loadEnv", () => {
       loadEnv({ ...base, NODE_ENV: "production", PHONE_OTP_ENABLED: "true" }).PHONE_OTP_ENABLED,
     ).toBe(true);
   });
+
+  it("accepts exact origins in CORS_ORIGINS and rejects anything else", () => {
+    expect(
+      loadEnv({
+        ...base,
+        CORS_ORIGINS: "https://staging-app.yoorker.com, http://localhost:5173",
+      }).CORS_ORIGINS,
+    ).toEqual(["https://staging-app.yoorker.com", "http://localhost:5173"]);
+    expect(loadEnv(base).CORS_ORIGINS).toEqual([]);
+    for (const bad of [
+      "https://staging-app.yoorker.com/",
+      "https://staging-app.yoorker.com/login",
+      "staging-app.yoorker.com",
+      "*",
+    ]) {
+      expect(() => loadEnv({ ...base, CORS_ORIGINS: bad })).toThrow(/CORS origin/);
+    }
+  });
+
+  it("reports the Render commit as the version, or dev locally", () => {
+    expect(loadEnv(base).VERSION).toBe("dev");
+    expect(loadEnv({ ...base, RENDER_GIT_COMMIT: "abc1234" }).VERSION).toBe("abc1234");
+  });
 });
