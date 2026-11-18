@@ -51,12 +51,20 @@ const envSchema = z
       ),
     /** Set by Render to the deployed commit; reported by /health so deploys can be confirmed. */
     RENDER_GIT_COMMIT: z.string().optional(),
+    /** Sentry project DSN. Unset or blank turns error reporting off (local runs, tests). */
+    SENTRY_DSN: z.preprocess((value) => (value === "" ? undefined : value), z.url().optional()),
+    /** Sentry environment name, e.g. staging. Defaults to NODE_ENV. */
+    SENTRY_ENVIRONMENT: z
+      .string()
+      .regex(/^[a-z0-9-]{1,32}$/, "SENTRY_ENVIRONMENT must be lowercase letters, digits or -")
+      .optional(),
     /** Phone OTP sign-in. Off in production by default: the log sender only prints codes (ADR-0007). */
     PHONE_OTP_ENABLED: z.enum(["true", "false"]).optional(),
   })
-  .transform(({ PHONE_OTP_ENABLED, RENDER_GIT_COMMIT, ...env }) => ({
+  .transform(({ PHONE_OTP_ENABLED, RENDER_GIT_COMMIT, SENTRY_ENVIRONMENT, ...env }) => ({
     ...env,
     VERSION: RENDER_GIT_COMMIT ?? "dev",
+    SENTRY_ENVIRONMENT: SENTRY_ENVIRONMENT ?? env.NODE_ENV,
     PHONE_OTP_ENABLED:
       PHONE_OTP_ENABLED === undefined
         ? env.NODE_ENV !== "production"

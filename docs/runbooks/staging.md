@@ -36,6 +36,7 @@ Render and Vercel issue their own certificates, so their records must stay grey.
 | `DATABASE_URL`           | Render → Environment                         | API runtime                 |
 | `OTP_HASH_SECRET`        | Render → Environment                         | API runtime                 |
 | `GOOGLE_CLIENT_IDS`      | Render → Environment                         | API runtime (not secret)    |
+| `SENTRY_DSN`             | Render → Environment                         | API error reporting         |
 
 The database URL is the Supabase **Session pooler** (port 5432, user
 `postgres.<project-ref>`), never the Transaction pooler (6543) or the IPv6-only direct host.
@@ -43,8 +44,17 @@ It ends in `?sslmode=no-verify`: encrypted, but the certificate is not checked. 
 staging; production must verify it (see ADR-0006).
 
 Other Render variables: `NODE_ENV=production`, `NODE_VERSION=22`, `API_PORT=10000`,
-`CORS_ORIGINS=https://staging-app.yoorker.com`, `TRUST_PROXY_HOPS=1`, `LOG_LEVEL=info`.
-`PHONE_OTP_ENABLED` is left unset, so phone OTP is off (ADR-0007).
+`CORS_ORIGINS=https://staging-app.yoorker.com`, `TRUST_PROXY_HOPS=1`, `LOG_LEVEL=info`,
+`SENTRY_ENVIRONMENT=staging`. `PHONE_OTP_ENABLED` is left unset, so phone OTP is off (ADR-0007).
+
+## Errors (Sentry)
+
+Unexpected API errors (500s, crashes, unhandled rejections) go to the Sentry project
+`yoorker-api`, tagged with the environment, the release (the deployed commit) and the request's
+`x-request-id`; search Render's logs for that id to see the full request. Deliberate HTTP
+errors (400, 401, 404, 409, the `/health` 503) are not reported. Cookies, auth headers, request
+bodies and phone numbers are removed before an event is sent. Without `SENTRY_DSN` nothing is
+reported.
 
 ## How an API deploy works
 

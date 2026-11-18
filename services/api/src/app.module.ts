@@ -4,10 +4,18 @@ import { LoggerModule } from "./common/logger.module";
 import { ConfigModule } from "./config/config.module";
 import { DatabaseModule } from "./database/database.module";
 import { HealthController } from "./health/health.controller";
+import { ObservabilityModule } from "./observability/observability.module";
 import { VenuesModule } from "./venues/venues.module";
 
 @Module({
-  imports: [ConfigModule, LoggerModule, DatabaseModule, AuthModule, VenuesModule],
+  imports: [
+    ConfigModule,
+    LoggerModule,
+    ObservabilityModule,
+    DatabaseModule,
+    AuthModule,
+    VenuesModule,
+  ],
   controllers: [HealthController],
 })
 export class AppModule {}
