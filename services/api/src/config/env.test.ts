@@ -44,4 +44,18 @@ describe("loadEnv", () => {
     expect(loadEnv(base).VERSION).toBe("dev");
     expect(loadEnv({ ...base, RENDER_GIT_COMMIT: "abc1234" }).VERSION).toBe("abc1234");
   });
+
+  it("turns Sentry off without a DSN and names the environment after NODE_ENV", () => {
+    expect(loadEnv(base).SENTRY_DSN).toBeUndefined();
+    expect(loadEnv({ ...base, SENTRY_DSN: "" }).SENTRY_DSN).toBeUndefined();
+    expect(() => loadEnv({ ...base, SENTRY_DSN: "not a url" })).toThrow(/SENTRY_DSN/);
+    expect(loadEnv({ ...base, NODE_ENV: "production" }).SENTRY_ENVIRONMENT).toBe("production");
+    expect(
+      loadEnv({ ...base, NODE_ENV: "production", SENTRY_ENVIRONMENT: "staging" })
+        .SENTRY_ENVIRONMENT,
+    ).toBe("staging");
+    expect(() => loadEnv({ ...base, SENTRY_ENVIRONMENT: "Staging!" })).toThrow(
+      /SENTRY_ENVIRONMENT/,
+    );
+  });
 });

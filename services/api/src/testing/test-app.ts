@@ -1,3 +1,4 @@
+import type { Type } from "@nestjs/common";
 import type { NestExpressApplication } from "@nestjs/platform-express";
 import { Test } from "@nestjs/testing";
 import { meResponseSchema, type MeResponse } from "@yoorker/contracts";
@@ -12,6 +13,11 @@ import {
 } from "../auth/google-verifier";
 import { OTP_SENDER, type OtpSender } from "../auth/otp-sender";
 import { ENV, loadEnv } from "../config/env";
+import {
+  ERROR_REPORTER,
+  type ErrorContext,
+  type ErrorReporter,
+} from "../observability/error-reporter";
 
 /** Keeps the last code per phone instead of sending it. */
 export class CapturingOtpSender implements OtpSender {
@@ -36,11 +42,20 @@ export class FakeGoogleVerifier implements GoogleTokenVerifier {
   }
 }
 
+/** Keeps reported errors instead of sending them to Sentry. */
+export class CapturingErrorReporter implements ErrorReporter {
+  readonly reports: { error: unknown; context: ErrorContext }[] = [];
+  report(error: unknown, context: ErrorContext) {
+    this.reports.push({ error, context });
+  }
+}
+
 export interface TestApp {
   app: NestExpressApplication;
   db: TestDatabase["db"];
   http: () => ReturnType<typeof request>;
   google: FakeGoogleVerifier;
+  errors: CapturingErrorReporter;
   /** Signs in with a 10-digit Indian mobile number; returns the user id and cookie header. */
   signIn(mobile: string): Promise<{ userId: string; cookie: string }>;
   /** Signs in with a fake Google account; email defaults to <subject>@example.com. */
@@ -52,11 +67,12 @@ export interface TestApp {
 
 /** The full API on a throwaway PostGIS database, with the production middleware stack. */
 export async function createTestApp(
-  options: { env?: Record<string, string> } = {},
+  options: { env?: Record<string, string>; controllers?: Type[] } = {},
 ): Promise<TestApp> {
   const t = await startTestDatabase();
   const sender = new CapturingOtpSender();
   const google = new FakeGoogleVerifier();
+  const errors = new CapturingErrorReporter();
   const env = loadEnv({
     NODE_ENV: "test",
     LOG_LEVEL: "silent",
@@ -65,13 +81,18 @@ export async function createTestApp(
     GOOGLE_CLIENT_IDS: "test-client.apps.googleusercontent.com",
     ...options.env,
   });
-  const moduleRef = await Test.createTestingModule({ imports: [AppModule] })
+  const moduleRef = await Test.createTestingModule({
+    imports: [AppModule],
+    controllers: options.controllers ?? [],
+  })
     .overrideProvider(ENV)
     .useValue(env)
     .overrideProvider(OTP_SENDER)
     .useValue(sender)
     .overrideProvider(GOOGLE_TOKEN_VERIFIER)
     .useValue(google)
+    .overrideProvider(ERROR_REPORTER)
+    .useValue(errors)
     .compile();
   const app = moduleRef.createNestApplication<NestExpressApplication>();
   configureApp(app, env);
@@ -84,6 +105,7 @@ export async function createTestApp(
     db: t.db,
     http,
     google,
+    errors,
     async signIn(mobile) {
       const asked = await http().post("/auth/otp/request").send({ phone: mobile }).expect(202);
       const verified = await http()
