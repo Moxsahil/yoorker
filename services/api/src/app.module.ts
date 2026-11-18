@@ -5,6 +5,7 @@ import { ConfigModule } from "./config/config.module";
 import { DatabaseModule } from "./database/database.module";
 import { HealthController } from "./health/health.controller";
 import { ObservabilityModule } from "./observability/observability.module";
+import { PhotosModule } from "./photos/photos.module";
 import { VenuesModule } from "./venues/venues.module";
 
 @Module({
@@ -15,6 +16,7 @@ import { VenuesModule } from "./venues/venues.module";
     DatabaseModule,
     AuthModule,
     VenuesModule,
+    PhotosModule,
   ],
   controllers: [HealthController],
 })
