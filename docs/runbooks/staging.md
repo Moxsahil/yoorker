@@ -37,6 +37,8 @@ Render and Vercel issue their own certificates, so their records must stay grey.
 | `OTP_HASH_SECRET`        | Render → Environment                         | API runtime                 |
 | `GOOGLE_CLIENT_IDS`      | Render → Environment                         | API runtime (not secret)    |
 | `SENTRY_DSN`             | Render → Environment                         | API error reporting         |
+| `R2_ACCESS_KEY_ID`       | Render → Environment                         | API photo uploads           |
+| `R2_SECRET_ACCESS_KEY`   | Render → Environment                         | API photo uploads           |
 
 The database URL is the Supabase **Session pooler** (port 5432, user
 `postgres.<project-ref>`), never the Transaction pooler (6543) or the IPv6-only direct host.
@@ -45,7 +47,9 @@ staging; production must verify it (see ADR-0006).
 
 Other Render variables: `NODE_ENV=production`, `NODE_VERSION=22`, `API_PORT=10000`,
 `CORS_ORIGINS=https://staging-app.yoorker.com`, `TRUST_PROXY_HOPS=1`, `LOG_LEVEL=info`,
-`SENTRY_ENVIRONMENT=staging`. `PHONE_OTP_ENABLED` is left unset, so phone OTP is off (ADR-0007).
+`SENTRY_ENVIRONMENT=staging`, `R2_ACCOUNT_ID=<Cloudflare account ID>`,
+`R2_PUBLIC_BUCKET=yoorker-staging-public`, `R2_PUBLIC_URL=https://staging-photos.yoorker.com`.
+`PHONE_OTP_ENABLED` is left unset, so phone OTP is off (ADR-0007).
 
 ## Errors (Sentry)
 
@@ -55,6 +59,21 @@ Unexpected API errors (500s, crashes, unhandled rejections) go to the Sentry pro
 errors (400, 401, 404, 409, the `/health` 503) are not reported. Cookies, auth headers, request
 bodies and phone numbers are removed before an event is sent. Without `SENTRY_DSN` nothing is
 reported.
+
+## Photos (Cloudflare R2)
+
+Venue photos live in the R2 bucket `yoorker-staging-public` (location APAC) and are served at
+`https://staging-photos.yoorker.com` (bucket → Settings → Custom Domains). The dashboard asks the
+API for a 10-minute upload link, sends the file straight to R2, then asks the API to add it; the
+API never receives the file itself.
+
+- **API token:** R2 → Manage API tokens, "Object Read & Write" on this bucket only.
+- **CORS policy** (bucket → Settings): `PUT` from `https://staging-app.yoorker.com` and
+  `http://localhost:5173`, headers `Content-Type` and `Cache-Control`.
+- **Check the bucket by hand:** with the five `R2_*` variables in `.env`, run
+  `cd services/api && R2_LIVE_TEST=1 pnpm vitest run src/photos/r2.live.test.ts`.
+
+Without the `R2_*` variables the photo endpoints answer 503.
 
 ## How an API deploy works
 

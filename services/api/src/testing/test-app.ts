@@ -18,6 +18,12 @@ import {
   type ErrorContext,
   type ErrorReporter,
 } from "../observability/error-reporter";
+import {
+  PHOTO_STORAGE,
+  type PhotoStorage,
+  type PresignedUpload,
+  type StoredObject,
+} from "../photos/photo-storage";
 
 /** Keeps the last code per phone instead of sending it. */
 export class CapturingOtpSender implements OtpSender {
@@ -50,12 +56,44 @@ export class CapturingErrorReporter implements ErrorReporter {
   }
 }
 
+/** An in-memory bucket; `put` stands in for the browser's upload. */
+export class FakePhotoStorage implements PhotoStorage {
+  readonly objects = new Map<string, StoredObject>();
+  readonly deleted: string[] = [];
+
+  async presignUpload(key: string, contentType: string): Promise<PresignedUpload> {
+    return {
+      url: `https://r2.example.com/${key}?X-Amz-Signature=test`,
+      headers: { "Content-Type": contentType },
+      expiresAt: new Date(Date.now() + 600_000),
+    };
+  }
+
+  put(key: string, size: number, contentType: string | undefined): void {
+    this.objects.set(key, { size, contentType });
+  }
+
+  async head(key: string): Promise<StoredObject | null> {
+    return this.objects.get(key) ?? null;
+  }
+
+  async delete(key: string): Promise<void> {
+    this.objects.delete(key);
+    this.deleted.push(key);
+  }
+
+  publicUrl(key: string): string {
+    return `https://photos.example.com/${key}`;
+  }
+}
+
 export interface TestApp {
   app: NestExpressApplication;
   db: TestDatabase["db"];
   http: () => ReturnType<typeof request>;
   google: FakeGoogleVerifier;
   errors: CapturingErrorReporter;
+  photos: FakePhotoStorage;
   /** Signs in with a 10-digit Indian mobile number; returns the user id and cookie header. */
   signIn(mobile: string): Promise<{ userId: string; cookie: string }>;
   /** Signs in with a fake Google account; email defaults to <subject>@example.com. */
@@ -73,6 +111,7 @@ export async function createTestApp(
   const sender = new CapturingOtpSender();
   const google = new FakeGoogleVerifier();
   const errors = new CapturingErrorReporter();
+  const photos = new FakePhotoStorage();
   const env = loadEnv({
     NODE_ENV: "test",
     LOG_LEVEL: "silent",
@@ -93,6 +132,8 @@ export async function createTestApp(
     .useValue(google)
     .overrideProvider(ERROR_REPORTER)
     .useValue(errors)
+    .overrideProvider(PHOTO_STORAGE)
+    .useValue(photos)
     .compile();
   const app = moduleRef.createNestApplication<NestExpressApplication>();
   configureApp(app, env);
@@ -106,6 +147,7 @@ export async function createTestApp(
     http,
     google,
     errors,
+    photos,
     async signIn(mobile) {
       const asked = await http().post("/auth/otp/request").send({ phone: mobile }).expect(202);
       const verified = await http()

@@ -58,4 +58,28 @@ describe("loadEnv", () => {
       /SENTRY_ENVIRONMENT/,
     );
   });
+
+  it("turns R2 photo storage on only when every R2 variable is set", () => {
+    const r2 = {
+      R2_ACCOUNT_ID: "0123456789abcdef0123456789abcdef",
+      R2_ACCESS_KEY_ID: "key",
+      R2_SECRET_ACCESS_KEY: "secret",
+      R2_PUBLIC_BUCKET: "yoorker-staging-public",
+      R2_PUBLIC_URL: "https://staging-photos.yoorker.com",
+    };
+    expect(loadEnv(base).R2).toBeNull();
+    expect(loadEnv({ ...base, ...r2 }).R2).toEqual({
+      accountId: r2.R2_ACCOUNT_ID,
+      accessKeyId: "key",
+      secretAccessKey: "secret",
+      bucket: "yoorker-staging-public",
+      publicUrl: "https://staging-photos.yoorker.com",
+    });
+    expect(() => loadEnv({ ...base, ...r2, R2_SECRET_ACCESS_KEY: "" })).toThrow(
+      /Set all R2_\* variables or none; missing R2_SECRET_ACCESS_KEY/,
+    );
+    expect(() =>
+      loadEnv({ ...base, ...r2, R2_PUBLIC_URL: "https://staging-photos.yoorker.com/" }),
+    ).toThrow(/R2_PUBLIC_URL/);
+  });
 });

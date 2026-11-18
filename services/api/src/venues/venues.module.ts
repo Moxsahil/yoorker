@@ -8,5 +8,6 @@ import { VenuesService } from "./venues.service";
   imports: [AuthModule],
   controllers: [OrganisationsController, VenuesController, CourtsController],
   providers: [VenuesService, AuditService],
+  exports: [VenuesService],
 })
 export class VenuesModule {}
