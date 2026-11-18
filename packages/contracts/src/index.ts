@@ -1,5 +1,6 @@
 export * from "./auth";
 export * from "./photos";
+export * from "./schedule";
 export * from "./venues";
 
 import { z } from "zod";

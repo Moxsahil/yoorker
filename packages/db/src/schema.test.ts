@@ -251,4 +251,54 @@ describe("schema", () => {
       /append-only/,
     );
   });
+
+  it("checks court schedules: start step, opening windows and booking lengths", async () => {
+    const { venueId } = await seedVenue("schedule-turf");
+    const court = await t.db
+      .insertInto("court")
+      .values({
+        venue_id: venueId,
+        name: "Court 1",
+        sports: ["CRICKET"],
+        surface: "NATURAL_GRASS",
+        capacity: 22,
+      })
+      .returning(["id", "start_step_minutes"])
+      .executeTakeFirstOrThrow();
+    expect(court.start_step_minutes).toBe(30);
+    await expect(
+      t.db
+        .updateTable("court")
+        .set({ start_step_minutes: 45 })
+        .where("id", "=", court.id)
+        .execute(),
+    ).rejects.toThrow(/court_start_step/);
+
+    const window = (weekday: number, opens_minute: number, closes_minute: number) =>
+      t.db
+        .insertInto("opening_hours")
+        .values({ court_id: court.id, weekday, opens_minute, closes_minute })
+        .execute();
+    await window(5, 1080, 1560); // Friday 18:00-02:00
+    await expect(window(5, 1200, 1300)).rejects.toThrow(/opening_hours_no_overlap/);
+    await expect(window(6, 60, 600)).rejects.toThrow(/opening_hours_no_overlap/); // Sat 01:00
+    await window(6, 120, 600); // Sat 02:00 is free
+    await expect(window(8, 0, 60)).rejects.toThrow(/opening_hours_weekday/);
+    await expect(window(1, 600, 600)).rejects.toThrow(/opening_hours_length/);
+    await expect(window(1, 0, 1441)).rejects.toThrow(/opening_hours_length/);
+
+    const duration = (minutes: number, sport: "CRICKET" | null = null) =>
+      t.db.insertInto("court_duration").values({ court_id: court.id, minutes, sport }).execute();
+    await duration(210, "CRICKET");
+    await duration(210);
+    await expect(duration(210, "CRICKET")).rejects.toThrow(/court_duration_unique/);
+    await expect(duration(10)).rejects.toThrow(/court_duration_minutes/);
+    await expect(duration(721)).rejects.toThrow(/court_duration_minutes/);
+    await expect(
+      t.db
+        .insertInto("court_duration")
+        .values({ court_id: court.id, minutes: 60, sport: "CHESS" as "CRICKET" })
+        .execute(),
+    ).rejects.toThrow(/court_duration_sport_valid/);
+  });
 });
