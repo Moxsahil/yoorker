@@ -62,15 +62,32 @@ export interface MembershipTable {
   created_at: CreatedAt;
 }
 
+export interface CityTable {
+  id: Generated<string>;
+  slug: string;
+  name: string;
+  state: string;
+  centroid: Geography;
+  /** Cities we actively launch in. Others exist because an owner listed a venue there. */
+  is_live: Generated<boolean>;
+  created_at: CreatedAt;
+}
+
 export interface VenueTable {
   id: Generated<string>;
   organisation_id: string;
+  city_id: string;
   slug: string;
   name: string;
   address: string;
+  locality: Nullable<string>;
+  /** Indian PIN code, 6 digits. */
+  pincode: Nullable<string>;
   location: Geography;
   timezone: Generated<string>;
   amenities: Generated<string[]>;
+  /** Facility rules shown to players, e.g. "No metal studs". */
+  rules: Generated<string[]>;
   is_active: Generated<boolean>;
   created_at: CreatedAt;
   updated_at: UpdatedAt;
@@ -147,6 +164,7 @@ export interface Database {
   app_user: AppUserTable;
   organisation: OrganisationTable;
   membership: MembershipTable;
+  city: CityTable;
   venue: VenueTable;
   venue_photo: VenuePhotoTable;
   court: CourtTable;

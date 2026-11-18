@@ -45,17 +45,35 @@ export const venueSlugSchema = z
   .max(60)
   .regex(/^[a-z0-9]+(-[a-z0-9]+)*$/, "Use lowercase letters, numbers and single hyphens");
 
+/** City as reported by Google geocoding for the venue's pin, e.g. Gurugram, Haryana. */
+export const cityInputSchema = z.object({ name: text(80), state: text(80) });
+export type CityInput = z.infer<typeof cityInputSchema>;
+
+export const pincodeSchema = z
+  .string()
+  .trim()
+  .regex(/^[1-9][0-9]{5}$/, "Enter a 6-digit PIN code");
+
 const venueFields = {
   slug: venueSlugSchema,
   name: text(120),
   address: text(300),
   location: locationSchema,
+  city: cityInputSchema,
+  /** Neighbourhood, e.g. Sector 57 or Baner. */
+  locality: text(100).nullable(),
+  pincode: pincodeSchema.nullable(),
   amenities: z.array(text(40)).max(20),
+  /** Facility rules shown to players, e.g. "No metal studs". */
+  rules: z.array(text(160)).max(20),
 };
 
 export const createVenueSchema = z.object({
   ...venueFields,
+  locality: venueFields.locality.default(null),
+  pincode: venueFields.pincode.default(null),
   amenities: venueFields.amenities.default([]),
+  rules: venueFields.rules.default([]),
 });
 
 export type CreateVenue = z.infer<typeof createVenueSchema>;
@@ -70,15 +88,22 @@ export const updateVenueSchema = z
 
 export type UpdateVenue = z.infer<typeof updateVenueSchema>;
 
+export const citySchema = z.object({ slug: z.string(), name: z.string(), state: z.string() });
+export type City = z.infer<typeof citySchema>;
+
 export const venueSchema = z.object({
   id: z.uuid(),
   organisationId: z.uuid(),
   slug: z.string(),
   name: z.string(),
   address: z.string(),
+  city: citySchema,
+  locality: z.string().nullable(),
+  pincode: z.string().nullable(),
   location: locationSchema,
   timezone: z.string(),
   amenities: z.array(z.string()),
+  rules: z.array(z.string()),
   isActive: z.boolean(),
 });
 

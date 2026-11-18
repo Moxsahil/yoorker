@@ -23,10 +23,16 @@ async function seedVenue(slug: string) {
     .values({ name: "Sector 57 Sports" })
     .returning("id")
     .executeTakeFirstOrThrow();
+  const city = await t.db
+    .selectFrom("city")
+    .select("id")
+    .where("slug", "=", "gurugram")
+    .executeTakeFirstOrThrow();
   const venue = await t.db
     .insertInto("venue")
     .values({
       organisation_id: org.id,
+      city_id: city.id,
       slug,
       name: "Sector 57 Turf",
       address: "Sector 57, Gurugram, Haryana",
@@ -159,6 +165,41 @@ describe("schema", () => {
         })
         .execute(),
     ).rejects.toThrow(/court_sports_valid/);
+  });
+
+  it("seeds Gurugram as the live launch city", async () => {
+    const live = await t.db
+      .selectFrom("city")
+      .select(["slug", "state"])
+      .where("is_live", "=", true)
+      .execute();
+    expect(live).toEqual([{ slug: "gurugram", state: "Haryana" }]);
+  });
+
+  it("allows one city per name and state, ignoring case", async () => {
+    const pune = { name: "Pune", state: "Maharashtra", centroid: point(73.8567, 18.5204) };
+    await t.db
+      .insertInto("city")
+      .values({ slug: "pune", ...pune })
+      .execute();
+    await expect(
+      t.db
+        .insertInto("city")
+        .values({ slug: "pune-2", ...pune, name: "PUNE" })
+        .execute(),
+    ).rejects.toThrow(/city_name_state_unique/);
+  });
+
+  it("checks the venue PIN code and number of rules", async () => {
+    const { venueId } = await seedVenue("pincode-turf");
+    const update = (set: { pincode?: string; rules?: string[] }) =>
+      t.db.updateTable("venue").set(set).where("id", "=", venueId).execute();
+    await update({ pincode: "122011" });
+    await expect(update({ pincode: "012345" })).rejects.toThrow(/venue_pincode_format/);
+    await expect(update({ pincode: "12201" })).rejects.toThrow(/venue_pincode_format/);
+    await expect(
+      update({ rules: Array.from({ length: 21 }, (_, i) => `Rule ${i}`) }),
+    ).rejects.toThrow(/venue_rules_count/);
   });
 
   it("finds a venue within 5 km of a point", async () => {
