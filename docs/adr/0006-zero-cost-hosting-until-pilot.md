@@ -4,13 +4,16 @@
 - **Date:** 2026-11-11
 - **Amends:** ADR-0002 (where Postgres runs), RFC-001 § Environments, TURF-006
 - **Updated:** 2026-11-17: bought `yoorker.com`; staging runs on its subdomains
+- **Updated:** 2026-11-18: pilot moved to 8 Feb 2027 (Sprint Plan v1.2); the hosting review
+  moves to Sprint 5
 
 ## Context
 
 The sprint plan puts staging and production on AWS Mumbai (RDS + ECS Fargate + ALB), built
 with Terraform in Sprint 0 (TURF-006). That costs roughly $45–50/month for staging alone and
 about $90–100/month with production. No real user touches the system until the pilot
-(25 Jan 2027), and the project has no budget for development.
+(25 Jan 2027 when this was written; 8 Feb 2027 since Sprint Plan v1.2), and the project has no
+budget for development.
 
 The hosting still has to meet these requirements:
 
@@ -70,7 +73,7 @@ The AWS Terraform in `infra/terraform` is kept but not applied. The Terraform De
 - The app stays portable: the API is one Node process and the database is plain Postgres, so
   moving to AWS (or Fly.io) later changes `DATABASE_URL` and the deploy target, not the code.
 
-## Before the pilot (Sprint 4, 11–22 Jan 2027)
+## Before the pilot (Sprint 5, 25 Jan–5 Feb 2027)
 
 These become required once real money flows:
 
