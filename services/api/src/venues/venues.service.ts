@@ -1,6 +1,7 @@
 import { ConflictException, Inject, Injectable, NotFoundException } from "@nestjs/common";
 import type {
   AuditEntry,
+  CityInput,
   Court,
   CreateCourt,
   CreateOrganisation,
@@ -24,17 +25,24 @@ const MANAGERS: readonly MemberRole[] = ["OWNER", "MANAGER"];
 function selectVenues(db: Kysely<Database>) {
   return db
     .selectFrom("venue")
+    .innerJoin("city", "city.id", "venue.city_id")
     .select([
-      "id",
-      "organisation_id as organisationId",
-      "slug",
-      "name",
-      "address",
-      "timezone",
-      "amenities",
-      "is_active as isActive",
-      sql<number>`ST_Y(location::geometry)`.as("lat"),
-      sql<number>`ST_X(location::geometry)`.as("lng"),
+      "venue.id",
+      "venue.organisation_id as organisationId",
+      "venue.slug",
+      "venue.name",
+      "venue.address",
+      "venue.locality",
+      "venue.pincode",
+      "venue.timezone",
+      "venue.amenities",
+      "venue.rules",
+      "venue.is_active as isActive",
+      "city.slug as citySlug",
+      "city.name as cityName",
+      "city.state as cityState",
+      sql<number>`ST_Y(venue.location::geometry)`.as("lat"),
+      sql<number>`ST_X(venue.location::geometry)`.as("lng"),
     ]);
 }
 
@@ -52,8 +60,68 @@ function selectCourts(db: Kysely<Database>) {
     ]);
 }
 
-function toVenue({ lat, lng, ...rest }: { lat: number; lng: number } & Omit<Venue, "location">) {
-  return { ...rest, location: { lat, lng } };
+type VenueRow = {
+  lat: number;
+  lng: number;
+  citySlug: string;
+  cityName: string;
+  cityState: string;
+} & Omit<Venue, "location" | "city">;
+
+function toVenue({ lat, lng, citySlug, cityName, cityState, ...rest }: VenueRow): Venue {
+  return {
+    ...rest,
+    city: { slug: citySlug, name: cityName, state: cityState },
+    location: { lat, lng },
+  };
+}
+
+/** "Gurugram" -> "gurugram", "New Delhi" -> "new-delhi". */
+function slugify(text: string): string {
+  const slug = text
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 60)
+    .replace(/-+$/, "");
+  return slug || "city";
+}
+
+/**
+ * The city's id, creating the city the first time an owner lists a venue there.
+ * Matching ignores case; the same name in two states gets a state-suffixed slug.
+ */
+async function cityIdFor(
+  trx: Kysely<Database>,
+  city: CityInput,
+  at: { lat: number; lng: number },
+): Promise<string> {
+  const find = () =>
+    trx
+      .selectFrom("city")
+      .select("id")
+      .where(
+        sql<boolean>`lower(name) = lower(${city.name}) AND lower(state) = lower(${city.state})`,
+      )
+      .executeTakeFirst();
+  const existing = await find();
+  if (existing) return existing.id;
+  for (const slug of [slugify(city.name), slugify(`${city.name} ${city.state}`)]) {
+    const created = await trx
+      .insertInto("city")
+      .values({ slug, name: city.name, state: city.state, centroid: point(at.lng, at.lat) })
+      .onConflict((oc) => oc.doNothing())
+      .returning("id")
+      .executeTakeFirst();
+    if (created) return created.id;
+    // Either another request created this city just now, or the slug belongs to a
+    // same-named city in another state.
+    const raced = await find();
+    if (raced) return raced.id;
+  }
+  throw new ConflictException("Couldn't save the city. Try again.");
 }
 
 @Injectable()
@@ -109,8 +177,8 @@ export class VenuesService {
   async listVenues(actor: Actor, organisationId: string): Promise<Venue[]> {
     await this.memberships.requireRole(actor.userId, organisationId, ANY_MEMBER);
     const rows = await selectVenues(this.db)
-      .where("organisation_id", "=", organisationId)
-      .orderBy("name")
+      .where("venue.organisation_id", "=", organisationId)
+      .orderBy("venue.name")
       .execute();
     return rows.map(toVenue);
   }
@@ -123,16 +191,20 @@ export class VenuesService {
           .insertInto("venue")
           .values({
             organisation_id: organisationId,
+            city_id: await cityIdFor(trx, input.city, input.location),
             slug: input.slug,
             name: input.name,
             address: input.address,
+            locality: input.locality,
+            pincode: input.pincode,
             location: point(input.location.lng, input.location.lat),
             amenities: input.amenities,
+            rules: input.rules,
           })
           .returning("id")
           .executeTakeFirstOrThrow();
         const venue = toVenue(
-          await selectVenues(trx).where("id", "=", id).executeTakeFirstOrThrow(),
+          await selectVenues(trx).where("venue.id", "=", id).executeTakeFirstOrThrow(),
         );
         await this.audit.record(trx, actor, {
           organisationId,
@@ -153,7 +225,7 @@ export class VenuesService {
 
   /** The venue, if the user belongs to its organisation; otherwise 404. */
   async getVenue(actor: Actor, venueId: string, roles = ANY_MEMBER): Promise<Venue> {
-    const row = await selectVenues(this.db).where("id", "=", venueId).executeTakeFirst();
+    const row = await selectVenues(this.db).where("venue.id", "=", venueId).executeTakeFirst();
     if (!row) throw new NotFoundException("Venue not found");
     await this.memberships.requireRole(actor.userId, row.organisationId, roles).catch((err) => {
       // A non-member must not learn the venue exists.
@@ -172,14 +244,20 @@ export class VenuesService {
             slug: input.slug,
             name: input.name,
             address: input.address,
+            locality: input.locality,
+            pincode: input.pincode,
             amenities: input.amenities,
+            rules: input.rules,
             is_active: input.isActive,
             ...(input.location && { location: point(input.location.lng, input.location.lat) }),
+            ...(input.city && {
+              city_id: await cityIdFor(trx, input.city, input.location ?? before.location),
+            }),
           })
           .where("id", "=", venueId)
           .execute();
         const after = toVenue(
-          await selectVenues(trx).where("id", "=", venueId).executeTakeFirstOrThrow(),
+          await selectVenues(trx).where("venue.id", "=", venueId).executeTakeFirstOrThrow(),
         );
         await this.audit.record(trx, actor, {
           organisationId: before.organisationId,

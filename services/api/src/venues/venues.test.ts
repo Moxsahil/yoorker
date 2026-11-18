@@ -22,7 +22,11 @@ const sector57 = {
   name: "Sector 57 Turf",
   address: "Sector 57, Gurugram, Haryana",
   location: { lat: 28.4211, lng: 77.0878 },
+  city: { name: "Gurugram", state: "Haryana" },
+  locality: "Sector 57",
+  pincode: "122011",
   amenities: ["Floodlights", "Parking"],
+  rules: ["No metal studs", "Arrive 10 minutes early"],
 };
 
 beforeAll(async () => {
@@ -68,6 +72,10 @@ describe("Sprint 1 demo: an owner sets up a venue with 2 courts", () => {
     const venue = venueSchema.parse(res.body);
     expect(venue.location.lat).toBeCloseTo(28.4211, 4);
     expect(venue.timezone).toBe("Asia/Kolkata");
+    expect(venue.city).toEqual({ slug: "gurugram", name: "Gurugram", state: "Haryana" });
+    expect(venue.locality).toBe("Sector 57");
+    expect(venue.pincode).toBe("122011");
+    expect(venue.rules).toEqual(["No metal studs", "Arrive 10 minutes early"]);
     venueId = venue.id;
   });
 
@@ -209,5 +217,89 @@ describe("validation and conflicts", () => {
       .send({ isActive: false })
       .expect(200);
     expect(res.body.isActive).toBe(false);
+  });
+});
+
+describe("cities (TURF-108)", () => {
+  const createIn = (
+    slug: string,
+    city: { name: string; state: string },
+    location = { lat: 18.5591, lng: 73.7868 },
+  ) =>
+    t
+      .http()
+      .post(`/organisations/${organisationId}/venues`)
+      .set("Cookie", owner.cookie)
+      .send({ slug, name: slug, address: "Somewhere", location, city });
+
+  it("creates a city the first time and reuses it, ignoring case", async () => {
+    const first = venueSchema.parse(
+      (await createIn("baner-arena", { name: "Pune", state: "Maharashtra" }).expect(201)).body,
+    );
+    const second = venueSchema.parse(
+      (await createIn("pune-box", { name: "pune", state: "MAHARASHTRA" }).expect(201)).body,
+    );
+    expect(first.city).toEqual({ slug: "pune", name: "Pune", state: "Maharashtra" });
+    expect(second.city.slug).toBe("pune");
+    expect(first.locality).toBeNull();
+    expect(first.rules).toEqual([]);
+    const pune = await t.db
+      .selectFrom("city")
+      .select("is_live")
+      .where("slug", "=", "pune")
+      .execute();
+    expect(pune).toEqual([{ is_live: false }]);
+  });
+
+  it("gives a same-named city in another state its own slug", async () => {
+    const mh = venueSchema.parse(
+      (await createIn("aurangabad-turf", { name: "Aurangabad", state: "Maharashtra" }).expect(201))
+        .body,
+    );
+    const br = venueSchema.parse(
+      (
+        await createIn(
+          "aurangabad-bihar-turf",
+          { name: "Aurangabad", state: "Bihar" },
+          { lat: 24.75, lng: 84.37 },
+        ).expect(201)
+      ).body,
+    );
+    expect(mh.city.slug).toBe("aurangabad");
+    expect(br.city.slug).toBe("aurangabad-bihar");
+  });
+
+  it("moves a venue to another city and clears its locality", async () => {
+    const res = await t
+      .http()
+      .patch(`/venues/${venueId}`)
+      .set("Cookie", owner.cookie)
+      .send({
+        city: { name: "Noida", state: "Uttar Pradesh" },
+        locality: null,
+        location: { lat: 28.627, lng: 77.3727 },
+      })
+      .expect(200);
+    const venue = venueSchema.parse(res.body);
+    expect(venue.city.slug).toBe("noida");
+    expect(venue.locality).toBeNull();
+    expect(venue.pincode).toBe("122011");
+  });
+
+  it("rejects a bad PIN code or a missing city with 400", async () => {
+    await t
+      .http()
+      .post(`/organisations/${organisationId}/venues`)
+      .set("Cookie", owner.cookie)
+      .send({ ...sector57, slug: "bad-pin-turf", pincode: "12345" })
+      .expect(400);
+    const noCity: Partial<typeof sector57> = { ...sector57 };
+    delete noCity.city;
+    await t
+      .http()
+      .post(`/organisations/${organisationId}/venues`)
+      .set("Cookie", owner.cookie)
+      .send({ ...noCity, slug: "no-city-turf" })
+      .expect(400);
   });
 });
