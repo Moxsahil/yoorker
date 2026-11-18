@@ -109,8 +109,35 @@ export interface CourtTable {
   surface: CourtSurface;
   capacity: number;
   is_active: Generated<boolean>;
+  /** How often a booking can start: 15, 30 or 60 minutes. */
+  start_step_minutes: Generated<number>;
   created_at: CreatedAt;
   updated_at: UpdatedAt;
+}
+
+/** One opening window in local time. No rows for a court means it is closed. */
+export interface OpeningHoursTable {
+  id: Generated<string>;
+  court_id: string;
+  /** ISO weekday: 1 = Monday ... 7 = Sunday. */
+  weekday: number;
+  /** Minutes after local midnight, 0-1439. */
+  opens_minute: number;
+  /** Up to opens_minute + 1440; above 1440 ends the next day. */
+  closes_minute: number;
+}
+
+/** A booking length players can choose on a court. */
+export interface CourtDurationTable {
+  id: Generated<string>;
+  court_id: string;
+  minutes: number;
+  label: Nullable<string>;
+  /** Null means every sport on the court. */
+  sport: Nullable<Sport>;
+  /** Fixed package price; null means priced per hour. */
+  price_paise: Nullable<number>;
+  position: Generated<number>;
 }
 
 export interface AuditLogTable {
@@ -168,6 +195,8 @@ export interface Database {
   venue: VenueTable;
   venue_photo: VenuePhotoTable;
   court: CourtTable;
+  opening_hours: OpeningHoursTable;
+  court_duration: CourtDurationTable;
   audit_log: AuditLogTable;
   otp_challenge: OtpChallengeTable;
   user_session: UserSessionTable;

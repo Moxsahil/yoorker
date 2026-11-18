@@ -346,6 +346,15 @@ export class VenuesService {
             "is_active as isActive",
           ])
           .executeTakeFirstOrThrow();
+        if (input.sports) {
+          // Booking lengths for a sport the court no longer offers go with it (TURF-206).
+          await trx
+            .deleteFrom("court_duration")
+            .where("court_id", "=", courtId)
+            .where("sport", "is not", null)
+            .where("sport", "not in", input.sports)
+            .execute();
+        }
         await this.audit.record(trx, actor, {
           organisationId: venue.organisationId,
           action: "court.update",

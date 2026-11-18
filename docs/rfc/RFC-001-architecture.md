@@ -35,7 +35,10 @@ notifications · live · audit
   a player is any signed-in user and has no membership row
 - `city(slug, name, state, centroid, is_live)`; one row per name and state (RFC-003)
 - `venue(city_id, location geography(Point), locality, pincode, rules[])`, `venue_photo`,
-  `court(sports[], surface, capacity, active)`; one court can host several sports
+  `court(sports[], surface, capacity, active, start_step_minutes)`; one court can host several sports
+- `opening_hours(court_id, weekday, opens_minute, closes_minute)` in local time, windows may run
+  past midnight; `court_duration(court_id, minutes, label, sport, price_paise)` lists the booking
+  lengths a court offers (1 h football, 3 h 30 m T20); see TURF-206
 - `price_rule(kind, priority, days, start, end, amount_paise)`, `blackout(court_id, during)`
 - `booking(court_id, during tstzrange, status, source, idempotency_key, hold_expires_at)`
 - `payment(razorpay_order_id, razorpay_payment_id, status, amount_paise)`
