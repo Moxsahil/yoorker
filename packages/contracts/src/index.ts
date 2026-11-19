@@ -3,6 +3,7 @@ export * from "./blocks";
 export * from "./photos";
 export * from "./pricing";
 export * from "./schedule";
+export * from "./slots";
 export * from "./venues";
 
 import { z } from "zod";

@@ -12,6 +12,7 @@ import {
   type GoogleTokenVerifier,
 } from "../auth/google-verifier";
 import { OTP_SENDER, type OtpSender } from "../auth/otp-sender";
+import { CLOCK, type Clock } from "../common/clock";
 import { ENV, loadEnv } from "../config/env";
 import {
   ERROR_REPORTER,
@@ -87,6 +88,17 @@ export class FakePhotoStorage implements PhotoStorage {
   }
 }
 
+/** A clock that stays where a test puts it. Starts on Monday 14 Dec 2026, 06:00 IST. */
+export class FakeClock implements Clock {
+  private current = new Date("2026-12-14T00:30:00Z");
+  now(): Date {
+    return new Date(this.current);
+  }
+  set(instant: string | Date): void {
+    this.current = new Date(instant);
+  }
+}
+
 export interface TestApp {
   app: NestExpressApplication;
   db: TestDatabase["db"];
@@ -94,6 +106,7 @@ export interface TestApp {
   google: FakeGoogleVerifier;
   errors: CapturingErrorReporter;
   photos: FakePhotoStorage;
+  clock: FakeClock;
   /** Signs in with a 10-digit Indian mobile number; returns the user id and cookie header. */
   signIn(mobile: string): Promise<{ userId: string; cookie: string }>;
   /** Signs in with a fake Google account; email defaults to <subject>@example.com. */
@@ -112,6 +125,7 @@ export async function createTestApp(
   const google = new FakeGoogleVerifier();
   const errors = new CapturingErrorReporter();
   const photos = new FakePhotoStorage();
+  const clock = new FakeClock();
   const env = loadEnv({
     NODE_ENV: "test",
     LOG_LEVEL: "silent",
@@ -134,6 +148,8 @@ export async function createTestApp(
     .useValue(errors)
     .overrideProvider(PHOTO_STORAGE)
     .useValue(photos)
+    .overrideProvider(CLOCK)
+    .useValue(clock)
     .compile();
   const app = moduleRef.createNestApplication<NestExpressApplication>();
   configureApp(app, env);
@@ -148,6 +164,7 @@ export async function createTestApp(
     google,
     errors,
     photos,
+    clock,
     async signIn(mobile) {
       const asked = await http().post("/auth/otp/request").send({ phone: mobile }).expect(202);
       const verified = await http()
