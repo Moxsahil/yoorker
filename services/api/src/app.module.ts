@@ -1,5 +1,6 @@
 import { Module } from "@nestjs/common";
 import { AuthModule } from "./auth/auth.module";
+import { BlocksModule } from "./blocks/blocks.module";
 import { LoggerModule } from "./common/logger.module";
 import { ConfigModule } from "./config/config.module";
 import { DatabaseModule } from "./database/database.module";
@@ -21,6 +22,7 @@ import { VenuesModule } from "./venues/venues.module";
     PhotosModule,
     ScheduleModule,
     PricingModule,
+    BlocksModule,
   ],
   controllers: [HealthController],
 })

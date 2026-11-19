@@ -44,7 +44,9 @@ notifications · live · audit
   whole-booking rule for its length and start, else the length's package price, else each
   15 minutes at the matching per-hour rule or the base price. A date rule beats weekday rules;
   then the higher priority wins.
-- `blackout(court_id, during)`
+- `blackout(court_id, during tstzrange, reason, note, created_by)`: one-off blocks (maintenance,
+  private event, holiday), never overlapping on a court; staff may add them, owners and managers
+  may remove any (TURF-203)
 - `booking(court_id, during tstzrange, status, source, idempotency_key, hold_expires_at)`
 - `payment(razorpay_order_id, razorpay_payment_id, status, amount_paise)`
 - `ledger_entry(txn_id, account, debit_paise, credit_paise)` — sum(debit) = sum(credit) per txn

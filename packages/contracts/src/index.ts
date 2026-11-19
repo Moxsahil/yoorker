@@ -1,4 +1,5 @@
 export * from "./auth";
+export * from "./blocks";
 export * from "./photos";
 export * from "./pricing";
 export * from "./schedule";
