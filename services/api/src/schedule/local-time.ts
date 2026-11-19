@@ -56,3 +56,24 @@ export function localToUtc(date: string, minuteOfDay: number, timeZone: string):
   const first = offsetMs(wall - offsetMs(wall, timeZone), timeZone);
   return new Date(wall - first);
 }
+
+/** The venue's local "YYYY-MM-DDTHH:MM" for a UTC instant. */
+export function utcToLocal(instant: Date, timeZone: string): string {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone,
+    hourCycle: "h23",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).formatToParts(instant);
+  const get = (type: string) => parts.find((p) => p.type === type)!.value;
+  return `${get("year")}-${get("month")}-${get("day")}T${get("hour")}:${get("minute")}`;
+}
+
+/** The UTC instant of a local "YYYY-MM-DDTHH:MM" at the venue. */
+export function localDateTimeToUtc(local: string, timeZone: string): Date {
+  const [hours, minutes] = local.slice(11).split(":").map(Number);
+  return localToUtc(local.slice(0, 10), hours! * 60 + minutes!, timeZone);
+}

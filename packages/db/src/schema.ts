@@ -37,6 +37,9 @@ export type CourtSurface = (typeof COURT_SURFACES)[number];
 export const PRICE_UNITS = ["PER_HOUR", "PER_BOOKING"] as const;
 export type PriceUnit = (typeof PRICE_UNITS)[number];
 
+export const BLOCK_REASONS = ["MAINTENANCE", "PRIVATE_EVENT", "HOLIDAY", "OTHER"] as const;
+export type BlockReason = (typeof BLOCK_REASONS)[number];
+
 export const IDENTITY_PROVIDERS = ["GOOGLE"] as const;
 export type IdentityProvider = (typeof IDENTITY_PROVIDERS)[number];
 
@@ -168,6 +171,21 @@ export interface PriceRuleTable {
   position: Generated<number>;
 }
 
+/** Time a court can't be booked (TURF-203). */
+export interface BlackoutTable {
+  id: Generated<string>;
+  court_id: string;
+  /**
+   * tstzrange [start, end). Write it with sql`tstzrange(${start}, ${end}, '[)')`; read
+   * lower(during) and upper(during), which come back as Dates.
+   */
+  during: string;
+  reason: BlockReason;
+  note: Nullable<string>;
+  created_by: Nullable<string>;
+  created_at: CreatedAt;
+}
+
 export interface AuditLogTable {
   /** bigint: node-postgres returns int8 as a string. */
   id: Generated<string>;
@@ -226,6 +244,7 @@ export interface Database {
   opening_hours: OpeningHoursTable;
   court_duration: CourtDurationTable;
   price_rule: PriceRuleTable;
+  blackout: BlackoutTable;
   audit_log: AuditLogTable;
   otp_challenge: OtpChallengeTable;
   user_session: UserSessionTable;

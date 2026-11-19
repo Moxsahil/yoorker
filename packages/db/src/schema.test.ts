@@ -1,7 +1,13 @@
 import { sql } from "kysely";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { point } from "./geo";
-import { COURT_SURFACES, IDENTITY_PROVIDERS, MEMBER_ROLES, PRICE_UNITS } from "./schema";
+import {
+  BLOCK_REASONS,
+  COURT_SURFACES,
+  IDENTITY_PROVIDERS,
+  MEMBER_ROLES,
+  PRICE_UNITS,
+} from "./schema";
 import { startTestDatabase, type TestDatabase } from "./testing";
 
 let t: TestDatabase;
@@ -56,6 +62,7 @@ describe("schema", () => {
     expect(await enumValues("court_surface")).toEqual([...COURT_SURFACES]);
     expect(await enumValues("identity_provider")).toEqual([...IDENTITY_PROVIDERS]);
     expect(await enumValues("price_unit")).toEqual([...PRICE_UNITS]);
+    expect(await enumValues("block_reason")).toEqual([...BLOCK_REASONS]);
   });
 
   it("accepts E.164 phone numbers and rejects anything else", async () => {
@@ -355,5 +362,40 @@ describe("schema", () => {
       /price_rule_per_booking_needs_length/,
     );
     await expect(insert({ price_paise: 600_050 })).rejects.toThrow(/price_rule_price/);
+  });
+
+  it("never lets two blocks on one court overlap", async () => {
+    const { venueId } = await seedVenue("blackout-turf");
+    const court = await t.db
+      .insertInto("court")
+      .values({
+        venue_id: venueId,
+        name: "Court 1",
+        sports: ["FOOTBALL"],
+        surface: "ARTIFICIAL_TURF",
+        capacity: 14,
+      })
+      .returning("id")
+      .executeTakeFirstOrThrow();
+    const block = (from: string, to: string) =>
+      t.db
+        .insertInto("blackout")
+        .values({
+          court_id: court.id,
+          during: sql<string>`tstzrange(${from}::timestamptz, ${to}::timestamptz, '[)')`,
+          reason: "MAINTENANCE",
+        })
+        .execute();
+    await block("2026-12-19T00:30Z", "2026-12-19T04:30Z");
+    await expect(block("2026-12-19T04:00Z", "2026-12-19T05:00Z")).rejects.toThrow(
+      /blackout_no_overlap/,
+    );
+    await block("2026-12-19T04:30Z", "2026-12-19T05:00Z"); // starts as the first one ends
+    await expect(block("2026-12-20T05:00Z", "2026-12-20T05:00Z")).rejects.toThrow(
+      /blackout_during_bounded/,
+    );
+    await expect(block("2027-01-01T00:00Z", "2027-02-02T00:00Z")).rejects.toThrow(
+      /blackout_max_length/,
+    );
   });
 });
