@@ -162,6 +162,8 @@ export function toCourtSchedule(args: {
 }
 
 export interface SlotTime {
+  /** Minutes after local midnight of the date asked for; past 1440 after midnight. */
+  startMinute: number;
   startsAt: Date;
   endsAt: Date;
 }
@@ -184,6 +186,7 @@ export function startsForDay(
   for (const w of windows) {
     for (let t = w.opensMinute; t + minutes <= w.closesMinute; t += schedule.startStepMinutes) {
       starts.push({
+        startMinute: t,
         startsAt: localToUtc(date, t, schedule.timezone),
         endsAt: localToUtc(date, t + minutes, schedule.timezone),
       });
