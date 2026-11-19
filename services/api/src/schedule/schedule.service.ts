@@ -1,23 +1,15 @@
-import { BadRequestException, Inject, Injectable, NotFoundException } from "@nestjs/common";
+import { BadRequestException, Inject, Injectable } from "@nestjs/common";
 import type { CourtSchedule, UpdateCourtSchedule } from "@yoorker/contracts";
 import type { Database, Db, MemberRole } from "@yoorker/db";
 import type { Kysely } from "kysely";
 import { AuditService } from "../audit/audit.service";
 import type { Actor } from "../common/actor";
 import { DB } from "../database/database.module";
-import { VenuesService } from "../venues/venues.service";
+import { VenuesService, type CourtAccess } from "../venues/venues.service";
 import { checkSchedule, toCourtSchedule } from "./schedule-rules";
 
 const ANY_MEMBER: readonly MemberRole[] = ["OWNER", "MANAGER", "STAFF"];
 const MANAGERS: readonly MemberRole[] = ["OWNER", "MANAGER"];
-
-interface CourtRef {
-  id: string;
-  venueId: string;
-  sports: string[];
-  timezone: string;
-  organisationId: string;
-}
 
 @Injectable()
 export class ScheduleService {
@@ -28,7 +20,7 @@ export class ScheduleService {
   ) {}
 
   async getSchedule(actor: Actor, courtId: string): Promise<CourtSchedule> {
-    const court = await this.courtFor(actor, courtId, ANY_MEMBER);
+    const court = await this.venues.getCourtAccess(actor, courtId, ANY_MEMBER);
     return this.load(this.db, court);
   }
 
@@ -38,7 +30,7 @@ export class ScheduleService {
     courtId: string,
     input: UpdateCourtSchedule,
   ): Promise<CourtSchedule> {
-    const court = await this.courtFor(actor, courtId, MANAGERS);
+    const court = await this.venues.getCourtAccess(actor, courtId, MANAGERS);
     const { windows, issues } = checkSchedule(input, court.sports);
     if (issues.length > 0) {
       throw new BadRequestException({ message: "Validation failed", issues });
@@ -93,26 +85,7 @@ export class ScheduleService {
     });
   }
 
-  /** The court and its venue's timezone, if the user may see it (or change it); else 404. */
-  private async courtFor(
-    actor: Actor,
-    courtId: string,
-    roles: readonly MemberRole[],
-  ): Promise<CourtRef> {
-    const court = await this.db
-      .selectFrom("court")
-      .innerJoin("venue", "venue.id", "court.venue_id")
-      .select(["court.id", "court.venue_id as venueId", "court.sports", "venue.timezone"])
-      .where("court.id", "=", courtId)
-      .executeTakeFirst();
-    if (!court) throw new NotFoundException("Court not found");
-    const venue = await this.venues.getVenue(actor, court.venueId, roles).catch((err) => {
-      throw err instanceof NotFoundException ? new NotFoundException("Court not found") : err;
-    });
-    return { ...court, organisationId: venue.organisationId };
-  }
-
-  private async load(db: Kysely<Database>, court: CourtRef): Promise<CourtSchedule> {
+  private async load(db: Kysely<Database>, court: CourtAccess): Promise<CourtSchedule> {
     const { start_step_minutes } = await db
       .selectFrom("court")
       .select("start_step_minutes")

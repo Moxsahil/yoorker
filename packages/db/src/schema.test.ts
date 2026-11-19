@@ -1,7 +1,7 @@
 import { sql } from "kysely";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { point } from "./geo";
-import { COURT_SURFACES, MEMBER_ROLES, IDENTITY_PROVIDERS } from "./schema";
+import { COURT_SURFACES, IDENTITY_PROVIDERS, MEMBER_ROLES, PRICE_UNITS } from "./schema";
 import { startTestDatabase, type TestDatabase } from "./testing";
 
 let t: TestDatabase;
@@ -55,6 +55,7 @@ describe("schema", () => {
     expect(await enumValues("member_role")).toEqual([...MEMBER_ROLES]);
     expect(await enumValues("court_surface")).toEqual([...COURT_SURFACES]);
     expect(await enumValues("identity_provider")).toEqual([...IDENTITY_PROVIDERS]);
+    expect(await enumValues("price_unit")).toEqual([...PRICE_UNITS]);
   });
 
   it("accepts E.164 phone numbers and rejects anything else", async () => {
@@ -300,5 +301,59 @@ describe("schema", () => {
         .values({ court_id: court.id, minutes: 60, sport: "CHESS" as "CRICKET" })
         .execute(),
     ).rejects.toThrow(/court_duration_sport_valid/);
+  });
+
+  it("checks price rules: days or a date, time window, whole rupees", async () => {
+    const { venueId } = await seedVenue("price-turf");
+    const court = await t.db
+      .insertInto("court")
+      .values({
+        venue_id: venueId,
+        name: "Court 1",
+        sports: ["CRICKET"],
+        surface: "NATURAL_GRASS",
+        capacity: 22,
+      })
+      .returning("id")
+      .executeTakeFirstOrThrow();
+    const base = (paise: number) =>
+      t.db
+        .updateTable("court")
+        .set({ base_price_per_hour_paise: paise })
+        .where("id", "=", court.id)
+        .execute();
+    await base(120_000);
+    await expect(base(120_050)).rejects.toThrow(/court_base_price/);
+
+    const insert = (overrides: Record<string, unknown>) =>
+      t.db
+        .insertInto("price_rule")
+        .values({
+          court_id: court.id,
+          name: "Night",
+          weekdays: [5],
+          from_minute: 1260,
+          to_minute: 1800,
+          unit: "PER_HOUR",
+          price_paise: 600_000,
+          ...overrides,
+        })
+        .execute();
+    await insert({});
+    const saved = await t.db
+      .selectFrom("price_rule")
+      .select(["weekdays", sql<string>`on_date::text`.as("onDate")])
+      .where("court_id", "=", court.id)
+      .executeTakeFirstOrThrow();
+    expect(saved).toEqual({ weekdays: [5], onDate: null });
+    await insert({ weekdays: [], on_date: "2026-12-31" });
+    await expect(insert({ weekdays: [] })).rejects.toThrow(/price_rule_days/);
+    await expect(insert({ on_date: "2026-12-31" })).rejects.toThrow(/price_rule_days/);
+    await expect(insert({ weekdays: [8] })).rejects.toThrow(/price_rule_days/);
+    await expect(insert({ to_minute: 1260 })).rejects.toThrow(/price_rule_length/);
+    await expect(insert({ unit: "PER_BOOKING" })).rejects.toThrow(
+      /price_rule_per_booking_needs_length/,
+    );
+    await expect(insert({ price_paise: 600_050 })).rejects.toThrow(/price_rule_price/);
   });
 });

@@ -34,6 +34,9 @@ export const COURT_SURFACES = [
 ] as const;
 export type CourtSurface = (typeof COURT_SURFACES)[number];
 
+export const PRICE_UNITS = ["PER_HOUR", "PER_BOOKING"] as const;
+export type PriceUnit = (typeof PRICE_UNITS)[number];
+
 export const IDENTITY_PROVIDERS = ["GOOGLE"] as const;
 export type IdentityProvider = (typeof IDENTITY_PROVIDERS)[number];
 
@@ -111,6 +114,8 @@ export interface CourtTable {
   is_active: Generated<boolean>;
   /** How often a booking can start: 15, 30 or 60 minutes. */
   start_step_minutes: Generated<number>;
+  /** Price per hour when no price rule matches; null means no fallback price. */
+  base_price_per_hour_paise: Nullable<number>;
   created_at: CreatedAt;
   updated_at: UpdatedAt;
 }
@@ -137,6 +142,29 @@ export interface CourtDurationTable {
   sport: Nullable<Sport>;
   /** Fixed package price; null means priced per hour. */
   price_paise: Nullable<number>;
+  position: Generated<number>;
+}
+
+/** An owner's price for some days, hours and booking lengths of a court (TURF-201). */
+export interface PriceRuleTable {
+  id: Generated<string>;
+  court_id: string;
+  name: string;
+  /** ISO weekdays, 1 = Monday; empty when on_date is set. */
+  weekdays: Generated<number[]>;
+  /**
+   * A single date, e.g. 2026-12-31. Written as "YYYY-MM-DD"; select it with `on_date::text`,
+   * because node-postgres turns a date column into a JS Date at local midnight.
+   */
+  on_date: Nullable<string>;
+  from_minute: number;
+  /** Up to from_minute + 1440; above 1440 ends the next day. */
+  to_minute: number;
+  /** Only bookings of this length; null means any length. */
+  minutes: Nullable<number>;
+  unit: PriceUnit;
+  price_paise: number;
+  priority: Generated<number>;
   position: Generated<number>;
 }
 
@@ -197,6 +225,7 @@ export interface Database {
   court: CourtTable;
   opening_hours: OpeningHoursTable;
   court_duration: CourtDurationTable;
+  price_rule: PriceRuleTable;
   audit_log: AuditLogTable;
   otp_challenge: OtpChallengeTable;
   user_session: UserSessionTable;
