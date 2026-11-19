@@ -39,6 +39,7 @@
     "@types/node": "^22.10.2",
     "@types/supertest": "^7.2.1",
     "@yoorker/config": "workspace:*",
+    "fast-check": "4.10.2",
     "pino-pretty": "^13.2.0",
     "supertest": "^7.3.2",
     "ts-loader": "^9.6.2",

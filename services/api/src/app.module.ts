@@ -6,6 +6,7 @@ import { DatabaseModule } from "./database/database.module";
 import { HealthController } from "./health/health.controller";
 import { ObservabilityModule } from "./observability/observability.module";
 import { PhotosModule } from "./photos/photos.module";
+import { PricingModule } from "./pricing/pricing.module";
 import { ScheduleModule } from "./schedule/schedule.module";
 import { VenuesModule } from "./venues/venues.module";
 
@@ -19,6 +20,7 @@ import { VenuesModule } from "./venues/venues.module";
     VenuesModule,
     PhotosModule,
     ScheduleModule,
+    PricingModule,
   ],
   controllers: [HealthController],
 })

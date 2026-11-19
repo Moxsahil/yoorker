@@ -22,6 +22,15 @@ import { DB } from "../database/database.module";
 const ANY_MEMBER: readonly MemberRole[] = ["OWNER", "MANAGER", "STAFF"];
 const MANAGERS: readonly MemberRole[] = ["OWNER", "MANAGER"];
 
+/** A court the user may act on, with what its schedule and prices need. */
+export interface CourtAccess {
+  id: string;
+  venueId: string;
+  organisationId: string;
+  sports: string[];
+  timezone: string;
+}
+
 function selectVenues(db: Kysely<Database>) {
   return db
     .selectFrom("venue")
@@ -278,6 +287,25 @@ export class VenuesService {
   }
 
   // ---- Courts ------------------------------------------------------------
+
+  /** The court, if the user holds one of `roles` in its organisation; otherwise 404. */
+  async getCourtAccess(
+    actor: Actor,
+    courtId: string,
+    roles: readonly MemberRole[] = ANY_MEMBER,
+  ): Promise<CourtAccess> {
+    const court = await this.db
+      .selectFrom("court")
+      .innerJoin("venue", "venue.id", "court.venue_id")
+      .select(["court.id", "court.venue_id as venueId", "court.sports", "venue.timezone"])
+      .where("court.id", "=", courtId)
+      .executeTakeFirst();
+    if (!court) throw new NotFoundException("Court not found");
+    const venue = await this.getVenue(actor, court.venueId, roles).catch((err) => {
+      throw err instanceof NotFoundException ? new NotFoundException("Court not found") : err;
+    });
+    return { ...court, organisationId: venue.organisationId };
+  }
 
   async listCourts(actor: Actor, venueId: string): Promise<Court[]> {
     await this.getVenue(actor, venueId);
