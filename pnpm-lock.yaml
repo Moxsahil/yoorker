@@ -66,11 +66,11 @@ importers:
         specifier: 1.5.0
         version: 1.5.0(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
       jspdf:
-        specifier: 3.0.3
-        version: 3.0.3
+        specifier: 4.2.1
+        version: 4.2.1
       jspdf-autotable:
         specifier: 5.0.2
-        version: 5.0.2(jspdf@3.0.3)
+        version: 5.0.2(jspdf@4.2.1)
       lucide-react:
         specifier: 1.61.0
         version: 1.61.0(@types/react@19.3.0)(react@19.3.0)
@@ -3897,8 +3897,8 @@ packages:
     peerDependencies:
       jspdf: ^2 || ^3
 
-  jspdf@3.0.3:
-    resolution: {integrity: sha512-eURjAyz5iX1H8BOYAfzvdPfIKK53V7mCpBTe7Kb16PaM8JSXEcUQNBQaiWMI8wY5RvNOPj4GccMjTlfwRBd+oQ==}
+  jspdf@4.2.1:
+    resolution: {integrity: sha512-YyAXyvnmjTbR4bHQRLzex3CuINCDlQnBqoSYyjJwTP2x9jDLuKDzy7aKUl0hgx3uhcl7xzg32agn5vlie6HIlQ==}
 
   jwa@2.0.1:
     resolution: {integrity: sha512-hRF04fqJIP8Abbkq5NKGN0Bbr3JxlQ+qhZufXVr0DvujKy93ZCbXZMHDL4EOtodSbCWxOqR8MS1tXA5hwqCXDg==}
@@ -9341,11 +9341,11 @@ snapshots:
     optionalDependencies:
       graceful-fs: 4.2.11
 
-  jspdf-autotable@5.0.2(jspdf@3.0.3):
+  jspdf-autotable@5.0.2(jspdf@4.2.1):
     dependencies:
-      jspdf: 3.0.3
+      jspdf: 4.2.1
 
-  jspdf@3.0.3:
+  jspdf@4.2.1:
     dependencies:
       '@babel/runtime': 7.29.14
       fast-png: 6.4.0
