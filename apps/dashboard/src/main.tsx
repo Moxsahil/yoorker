@@ -1,9 +1,19 @@
+import "./globals.css";
+
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
-import { App } from "./App";
+import { RouterProvider } from "react-router";
+
+import { THEME } from "@/config/theme";
+import { bootCustomizer } from "@/kit/customizer/customizer-boot";
+
+import { router } from "./router";
+
+// The saved theme preset is applied before anything is drawn.
+bootCustomizer(THEME);
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
-    <App />
+    <RouterProvider router={router} />
   </StrictMode>,
 );

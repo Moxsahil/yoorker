@@ -1,0 +1,209 @@
+import { useRouter } from "@/kit/framework";
+import { useQueryClient } from "@tanstack/react-query";
+import { ArrowLeftIcon, SmartphoneIcon } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
+
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
+import { Label } from "@/components/ui/label";
+import { Spinner } from "@/components/ui/spinner";
+import { api, ApiError } from "@/lib/api";
+import type { Me } from "@/lib/yoorker";
+import { DEV_NOTES } from "@/lib/dev-notes";
+
+import { AuthHeader } from "./auth-shell";
+
+const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+const GOOGLE_SCRIPT = "https://accounts.google.com/gsi/client";
+
+/** Loads Google Identity Services once, however many times the form mounts. */
+function loadGoogle(): Promise<void> {
+  if (window.google) return Promise.resolve();
+  return new Promise((resolve, reject) => {
+    const script =
+      document.querySelector<HTMLScriptElement>(`script[src="${GOOGLE_SCRIPT}"]`) ??
+      Object.assign(document.createElement("script"), { src: GOOGLE_SCRIPT, async: true });
+    script.addEventListener("load", () => resolve(), { once: true });
+    script.addEventListener("error", () => reject(new Error("Google sign-in failed to load")), {
+      once: true,
+    });
+    if (!script.isConnected) document.head.appendChild(script);
+  });
+}
+
+declare global {
+  interface Window {
+    google?: {
+      accounts: {
+        id: {
+          initialize(options: {
+            client_id: string;
+            callback: (response: { credential: string }) => void;
+          }): void;
+          renderButton(element: HTMLElement, options: Record<string, unknown>): void;
+        };
+      };
+    };
+  }
+}
+
+/**
+ * Yoorker sign-in against the real API: Google (when VITE_GOOGLE_CLIENT_ID is set and
+ * this origin is allowed on the OAuth client), and phone OTP, which the local API allows in
+ * development and prints the code to its own log.
+ */
+export function YoorkerSignIn() {
+  const router = useRouter();
+  const client = useQueryClient();
+  const [phone, setPhone] = useState("");
+  const [challenge, setChallenge] = useState<string | null>(null);
+  const [code, setCode] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const googleButton = useRef<HTMLDivElement>(null);
+
+  const signedIn = useCallback(
+    (me: Me) => {
+      client.setQueryData(["me"], me);
+      router.replace("/");
+    },
+    [client, router],
+  );
+
+  const run = async (work: () => Promise<void>) => {
+    setBusy(true);
+    setError(null);
+    try {
+      await work();
+    } catch (err) {
+      setError(
+        err instanceof ApiError
+          ? err.message
+          : "Something went wrong. Is the API running on port 4000?",
+      );
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  // Google's button is drawn once its script has loaded. `run` and `signedIn` are stable for
+  // the life of the form, so this runs once.
+  useEffect(() => {
+    if (!GOOGLE_CLIENT_ID) return;
+    let cancelled = false;
+    loadGoogle()
+      .then(() => {
+        if (cancelled || !window.google || !googleButton.current) return;
+        window.google.accounts.id.initialize({
+          client_id: GOOGLE_CLIENT_ID,
+          callback: ({ credential }) =>
+            run(async () =>
+              signedIn(await api<Me>("/auth/google", { body: { idToken: credential } })),
+            ),
+        });
+        window.google.accounts.id.renderButton(googleButton.current, {
+          theme: "outline",
+          size: "large",
+          width: 360,
+          text: "continue_with",
+        });
+      })
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  return (
+    <div>
+      <AuthHeader
+        title="Sign in to Yoorker"
+        description="Manage your venues, courts, prices and bookings."
+      />
+      {GOOGLE_CLIENT_ID && (
+        <>
+          <div ref={googleButton} className="flex min-h-10 justify-center" />
+          <div className="my-6 flex items-center gap-3 text-xs text-muted-foreground">
+            <span className="h-px flex-1 bg-border" />
+            or with your mobile
+            <span className="h-px flex-1 bg-border" />
+          </div>
+        </>
+      )}
+
+      {challenge === null ? (
+        <form
+          className="flex flex-col gap-4"
+          onSubmit={(event) => {
+            event.preventDefault();
+            run(async () => {
+              const res = await api<{ challengeId: string }>("/auth/otp/request", {
+                body: { phone },
+              });
+              setChallenge(res.challengeId);
+            });
+          }}
+        >
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="phone">Mobile number</Label>
+            <Input
+              id="phone"
+              inputMode="tel"
+              autoComplete="tel"
+              placeholder="98765 43210"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              required
+            />
+          </div>
+          <Button type="submit" disabled={busy || phone.trim().length < 10}>
+            {busy ? <Spinner /> : <SmartphoneIcon data-icon="inline-start" />}
+            Send code
+          </Button>
+        </form>
+      ) : (
+        <form
+          className="flex flex-col gap-4"
+          onSubmit={(event) => {
+            event.preventDefault();
+            run(async () =>
+              signedIn(
+                await api<Me>("/auth/otp/verify", {
+                  body: { challengeId: challenge, code },
+                }),
+              ),
+            );
+          }}
+        >
+          <div className="flex flex-col gap-2">
+            <Label>Enter the 6-digit code</Label>
+            <InputOTP maxLength={6} value={code} onChange={setCode} autoFocus>
+              <InputOTPGroup>
+                {Array.from({ length: 6 }, (_, i) => (
+                  <InputOTPSlot key={i} index={i} />
+                ))}
+              </InputOTPGroup>
+            </InputOTP>
+            {DEV_NOTES && (
+              <p className="text-xs text-muted-foreground">
+                Local demo: the API prints it as “OTP for +91••••••
+                {phone.slice(-4)}: ……”.
+              </p>
+            )}
+          </div>
+          <Button type="submit" disabled={busy || code.length !== 6}>
+            {busy && <Spinner />}
+            Sign in
+          </Button>
+          <Button type="button" variant="ghost" onClick={() => (setChallenge(null), setCode(""))}>
+            <ArrowLeftIcon data-icon="inline-start" />
+            Use another number
+          </Button>
+        </form>
+      )}
+      {error && <p className="mt-4 text-sm text-destructive">{error}</p>}
+    </div>
+  );
+}
