@@ -5,7 +5,7 @@ import { createRoot } from "react-dom/client";
 import { RouterProvider } from "react-router";
 
 import { THEME } from "@/config/theme";
-import { bootCustomizer } from "@/kit/customizer/customizer-script";
+import { bootCustomizer } from "@/kit/customizer/customizer-boot";
 
 import { router } from "./router";
 

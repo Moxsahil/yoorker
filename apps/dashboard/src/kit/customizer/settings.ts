@@ -64,10 +64,9 @@ export function fontVariables(fonts: readonly FontOption[]): Record<string, stri
 }
 
 /**
- * Builds the CSS the customizer injects. It must stay self-contained (no
- * references outside its body): the same function source runs in the inline
- * script that applies saved settings before first paint. An unknown font falls
- * back to the first one the template lists.
+ * Builds the CSS the customizer injects, for the provider and for the
+ * before-first-paint boot. An unknown font falls back to the first one the
+ * template lists.
  */
 export function buildThemeCss(
   settings: Pick<CustomizerSettings, "preset" | "custom" | "radius" | "font" | "scale">,
