@@ -1,4 +1,5 @@
 import js from "@eslint/js";
+import reactHooks from "eslint-plugin-react-hooks";
 import globals from "globals";
 import tseslint from "typescript-eslint";
 
@@ -19,6 +20,11 @@ export default tseslint.config(
     // `declare global { namespace Express { ... } }` is the standard way to extend
     // third-party types (e.g. req.auth); real namespaces stay banned.
     rules: { "@typescript-eslint/no-namespace": ["error", { allowDeclarations: true }] },
+  },
+  {
+    // React's rules of hooks for the dashboard.
+    files: ["apps/dashboard/**/*.{ts,tsx}"],
+    ...reactHooks.configs.flat.recommended,
   },
   {
     files: ["**/*.cjs"],
