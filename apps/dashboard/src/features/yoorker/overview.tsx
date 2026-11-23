@@ -50,6 +50,7 @@ import {
   type Stat,
 } from "./overview-cards";
 import { PeriodFilter, usePeriod } from "./period-filter";
+import { OverviewSkeleton } from "./page-skeletons";
 
 function useGreeting() {
   return useSyncExternalStore(
@@ -165,7 +166,7 @@ export function OverviewPage() {
   const before = periodMetrics(all, period.previous, today, openMinutes);
   const vs = period.range.days === 1 ? "yesterday" : `the ${period.range.days} days before`;
 
-  if (loading) return <Skeleton className="h-96" />;
+  if (loading) return <OverviewSkeleton />;
   if (!venue) {
     return (
       <div className="flex flex-col gap-6">

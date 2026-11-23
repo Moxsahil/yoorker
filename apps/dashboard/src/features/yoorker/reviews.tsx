@@ -15,6 +15,7 @@ import { cn } from "@/lib/utils";
 import { dayLabel, todayAt } from "@/lib/yoorker";
 
 import { SampleBadge } from "./common";
+import { ReviewsSkeleton } from "./page-skeletons";
 
 type Filter = "all" | "reply" | "low";
 
@@ -153,7 +154,7 @@ function ReviewItem({
 }
 
 export function ReviewsPage() {
-  const { courts } = useCurrentVenue();
+  const { courts, loading } = useCurrentVenue();
   const today = todayAt();
   const courtNames = useMemo(() => courts.map((c) => c.name), [courts]);
   const [reviews, setReviews] = useState<Review[] | null>(null);
@@ -166,6 +167,8 @@ export function ReviewsPage() {
   const rows = list.filter((r) =>
     filter === "reply" ? !r.reply : filter === "low" ? r.rating <= 3 : true,
   );
+
+  if (loading) return <ReviewsSkeleton />;
 
   return (
     <div className="flex flex-col gap-6">

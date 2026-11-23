@@ -42,6 +42,7 @@ import { cn } from "@/lib/utils";
 import { dayLabel, inr, todayAt } from "@/lib/yoorker";
 
 import { SampleBadge } from "./common";
+import { MarketingSkeleton } from "./page-skeletons";
 
 type Channel = "WHATSAPP" | "SMS";
 type CampaignStatus = "SENT" | "SCHEDULED" | "DRAFT";
@@ -448,7 +449,7 @@ function BookingLinkCard({
 }
 
 export function MarketingPage() {
-  const { venue, courts } = useCurrentVenue();
+  const { venue, courts, loading } = useCurrentVenue();
   const today = todayAt();
   const venueName = venue?.name ?? "your venue";
   const [campaigns, setCampaigns] = useState<Campaign[] | null>(null);
@@ -516,6 +517,8 @@ export function MarketingPage() {
   };
   const link = `yoorker.com/${venue?.slug ?? "your-venue"}`;
   const audienceLabel = (id: AudienceId) => audiences.find((a) => a.id === id)?.label ?? id;
+
+  if (loading) return <MarketingSkeleton />;
 
   return (
     <div className="flex flex-col gap-6">

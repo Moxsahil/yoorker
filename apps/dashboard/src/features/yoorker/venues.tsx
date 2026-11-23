@@ -64,6 +64,7 @@ import { DEV_NOTES } from "@/lib/dev-notes";
 
 import { LiveBadge, LoadDemoVenueButton, NoVenue } from "./common";
 import { VenueMap } from "./venue-map";
+import { VenueDetailSkeleton, VenuesSkeleton } from "./page-skeletons";
 
 const errorText = (error: unknown) => (error instanceof ApiError ? error.message : String(error));
 
@@ -114,15 +115,7 @@ export function VenuesPage() {
   const manager = organisations.some((org) => org.role === "OWNER" || org.role === "MANAGER");
   const totalCourts = courts.reduce((sum, q) => sum + (q.data?.length ?? 0), 0);
 
-  if (loading) {
-    return (
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-        {[0, 1, 2].map((i) => (
-          <Skeleton key={i} className="h-80 rounded-2xl" />
-        ))}
-      </div>
-    );
-  }
+  if (loading) return <VenuesSkeleton />;
 
   return (
     <div className="flex flex-col gap-6">
@@ -264,7 +257,7 @@ export function VenueDetailPage({ venueId }: { venueId: string }) {
     retry: false,
   });
 
-  if (loading) return <Skeleton className="h-96 rounded-2xl" />;
+  if (loading) return <VenueDetailSkeleton />;
   if (!venue) {
     return (
       <div className="flex flex-col items-start gap-3">

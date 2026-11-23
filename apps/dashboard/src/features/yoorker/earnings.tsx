@@ -55,6 +55,7 @@ import { dayLabel, inr, todayAt } from "@/lib/yoorker";
 
 import { SampleBadge } from "./common";
 import { PeriodFilter, usePeriod } from "./period-filter";
+import { EarningsSkeleton } from "./page-skeletons";
 
 const METHOD_ICON: Record<Method, LucideIcon> = {
   UPI: SmartphoneIcon,
@@ -472,7 +473,7 @@ async function downloadReportPdf(
 // ---------------------------------------------------------------------------
 
 export function EarningsPage() {
-  const { courts, venue } = useCurrentVenue();
+  const { courts, venue, loading } = useCurrentVenue();
   const today = todayAt();
   const period = usePeriod(today);
   const manual = useManualBookings((state) => state.bookings);
@@ -492,6 +493,8 @@ export function EarningsPage() {
   const list = useMemo(() => transactions(all, range, today), [all, range, today]);
   const weekly = useMemo(() => payouts(all, today), [all, today]);
   const venueName = venue?.name ?? "Venue";
+
+  if (loading) return <EarningsSkeleton />;
 
   return (
     <div className="flex flex-col gap-6">
