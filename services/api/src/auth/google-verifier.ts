@@ -5,14 +5,12 @@ import { ENV, type Env } from "../config/env";
 export const GOOGLE_TOKEN_VERIFIER = Symbol("GOOGLE_TOKEN_VERIFIER");
 
 export interface GoogleProfile {
-  /** Google's stable account id ("sub"). */
   subject: string;
   email: string | null;
   emailVerified: boolean;
   name: string | null;
 }
 
-/** Checks a Google ID token; returns who it belongs to, or null if it isn't valid for us. */
 export interface GoogleTokenVerifier {
   verify(idToken: string): Promise<GoogleProfile | null>;
 }
@@ -34,7 +32,6 @@ export class GoogleAuthLibraryVerifier implements GoogleTokenVerifier {
 
     let ticket: LoginTicket;
     try {
-      // Checks the signature, expiry, issuer and that the token was issued for our client ID.
       ticket = await this.client.verifySignedJwtWithCertsAsync(
         idToken,
         certs,

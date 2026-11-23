@@ -35,7 +35,6 @@ import { dayLabel, inr, todayAt } from "@/lib/yoorker";
 import { SampleBadge } from "./common";
 import { CustomersSkeleton } from "./page-skeletons";
 
-/** Rows shown at first, and added by each "Show more". */
 const PAGE = 40;
 
 const initials = (name: string) =>
@@ -200,7 +199,6 @@ export function CustomersPage() {
                 setSearch(e.target.value);
                 setShown(PAGE);
               }}
-              // The header pulls its action out to the edge; push the field back inside the card.
               className="me-2 h-8 w-64 max-w-[50vw]"
             />
           }

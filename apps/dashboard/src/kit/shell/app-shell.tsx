@@ -34,7 +34,6 @@ function SearchButton() {
       onClick={() => setOpen(true)}
       aria-keyshortcuts="Meta+K Control+K"
     >
-      {/* The visible word is the name (no aria-label), so the name always matches what is on screen. */}
       <span className="flex items-center gap-2">
         <SearchIcon />
         <span className="sr-only sm:not-sr-only">Search…</span>
@@ -50,19 +49,12 @@ function SearchButton() {
 interface AppShellProps {
   config: ShellConfig;
   badges: Record<string, number>;
-  /** Header buttons placed before the customizer (notifications, assistant). */
   actions?: React.ReactNode;
-  /** Panels rendered beside the content, e.g. an assistant side panel. */
   aside?: React.ReactNode;
-  /** Breadcrumb title of the home route ("/"). Default: the nav entry for "/", else "Overview". */
   home?: string;
   children: React.ReactNode;
 }
 
-/**
- * The frame every dashboard page sits in. Layout, sidebar style and content
- * width come from the customizer; navigation comes from `config`.
- */
 export function AppShell({
   config,
   badges,
@@ -76,10 +68,8 @@ export function AppShell({
   const Brand = config.brand.logo;
   const links = [...config.nav.flatMap((group) => group.items), ...config.secondary];
   const home = { title: homeTitle ?? titleFor("/", links) ?? "Overview", href: "/" };
-  // The shell stays mounted across routes, so the mobile menu closes itself when a link is followed.
   const [menuOpen, setMenuOpen] = useState(false);
 
-  // The sidebar layout's SidebarInset is already the page's <main>, so the content there is a <div>.
   const Content = layout === "top" ? "main" : "div";
   const main = (
     <Content
@@ -191,7 +181,6 @@ export function AppShell({
     <BreadcrumbLabelProvider>
       <SidebarProvider>
         <AppSidebar config={config} badges={badges} />
-        {/* min-w-0 lets wide tables scroll inside their card instead of widening the page. */}
         <SidebarInset className="min-w-0">
           <header className="sticky top-0 z-30 flex h-14 shrink-0 items-center gap-2 border-b bg-background/95 px-4 backdrop-blur supports-[backdrop-filter]:bg-background/80 md:rounded-t-xl">
             <SidebarTrigger className="-ms-1" />

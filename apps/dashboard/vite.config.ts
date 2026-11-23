@@ -10,7 +10,6 @@ export default defineConfig({
   build: {
     rolldownOptions: {
       output: {
-        // Libraries change less often than app code, so they get their own long-cached files.
         codeSplitting: {
           groups: [
             {

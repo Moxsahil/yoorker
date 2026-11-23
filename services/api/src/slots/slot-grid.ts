@@ -10,7 +10,6 @@ export interface CourtBlock {
   reason: BlockReason;
 }
 
-/** Everything about one court that the slot grid needs, loaded once per request. */
 export interface CourtCalendar {
   timezone: string;
   startStepMinutes: number;
@@ -27,10 +26,6 @@ function blockAt(calendar: CourtCalendar, startsAt: Date, endsAt: Date): CourtBl
   );
 }
 
-/**
- * Every start for a booking of `minutes` on local `date`, with its status and price. A slot
- * that overlaps a block is BLOCKED; one that has started is PAST.
- */
 export function slotsForDay(
   calendar: CourtCalendar,
   date: string,
@@ -52,16 +47,11 @@ export function slotsForDay(
       end: formatClock(startMinute + minutes),
       status,
       pricePaise: price?.pricePaise ?? null,
-      // An hourly price at one rate all the way names that rule too ("Evening").
       ruleName: price?.ruleName ?? (price?.parts.length === 1 ? price.parts[0]!.ruleName : null),
     };
   });
 }
 
-/**
- * The owner's view of one local date: a cell per start step inside each opening window
- * (the last one may be shorter), each FREE, BLOCKED with the block, or PAST.
- */
 export function gridForDay(calendar: CourtCalendar, date: string, now: Date): GridCell[] {
   const weekday = isoWeekday(date);
   const cells: GridCell[] = [];
@@ -90,10 +80,6 @@ export function gridForDay(calendar: CourtCalendar, date: string, now: Date): Gr
   return cells;
 }
 
-/**
- * The next `count` bookable slots of `minutes` from `now`, looking up to `days` local dates
- * ahead: free and priced. Discovery shows these as "free at 6 PM" (RFC-003).
- */
 export function nextFree(
   calendar: CourtCalendar,
   today: string,

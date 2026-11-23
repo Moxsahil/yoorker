@@ -6,7 +6,6 @@ import { persist } from "zustand/middleware";
 import { api, ApiError } from "./api";
 import type { Court, Me, Organisation, Venue } from "./yoorker";
 
-/** The signed-in user, or null when signed out (401). */
 export function useMe() {
   return useQuery({
     queryKey: ["me"],
@@ -30,7 +29,6 @@ function useOrganisations(enabled = true) {
   });
 }
 
-/** Every venue across the user's organisations. */
 export function useAllVenues() {
   const orgs = useOrganisations();
   const results = useQueries({
@@ -68,7 +66,6 @@ export const useRemovedVenues = create<{
   ),
 );
 
-/** Which venue the owner is looking at; remembered on this device. */
 export const useVenueChoice = create<{
   venueId: string | null;
   choose: (id: string) => void;
@@ -78,7 +75,6 @@ export const useVenueChoice = create<{
   }),
 );
 
-/** The chosen venue (or the first one), its organisation role and courts. */
 export function useCurrentVenue() {
   const { organisations, venues, loading } = useAllVenues();
   const venueId = useVenueChoice((state) => state.venueId);

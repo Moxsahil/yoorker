@@ -9,7 +9,6 @@ import { isoWeekday, localToUtc } from "./local-time";
 const DAY = 1440;
 const WEEK = 7 * DAY;
 
-/** An opening window as stored: minutes after local midnight; closes may pass 1440. */
 export interface StoredWindow {
   weekday: number;
   opensMinute: number;
@@ -21,19 +20,16 @@ export interface ScheduleIssue {
   message: string;
 }
 
-/** "06:30" -> 390 */
 export function parseClock(time: string): number {
   const [hours, minutes] = time.split(":").map(Number);
   return hours! * 60 + minutes!;
 }
 
-/** 390 -> "06:30"; 1560 (02:00 the next day) -> "02:00" */
 export function formatClock(minute: number): string {
   const m = minute % DAY;
   return `${String(Math.floor(m / 60)).padStart(2, "0")}:${String(m % 60).padStart(2, "0")}`;
 }
 
-/** 210 -> "3 h 30 m", 60 -> "1 h", 30 -> "30 m" */
 export function describeMinutes(minutes: number): string {
   const h = Math.floor(minutes / 60);
   const m = minutes % 60;
@@ -48,7 +44,6 @@ function toStored(weekday: number, opens: string, closes: string): StoredWindow 
   return { weekday, opensMinute, closesMinute };
 }
 
-/** The window's span in minutes from Monday 00:00, split in two if it runs past Sunday night. */
 function weekRanges(w: StoredWindow): [number, number][] {
   const start = (w.weekday - 1) * DAY + w.opensMinute;
   const end = (w.weekday - 1) * DAY + w.closesMinute;
@@ -64,10 +59,6 @@ function overlaps(a: StoredWindow, b: StoredWindow): boolean {
   return weekRanges(a).some(([s1, e1]) => weekRanges(b).some(([s2, e2]) => s1 < e2 && s2 < e1));
 }
 
-/**
- * Checks a schedule against the rules the request schema can't see on its own, and turns it
- * into stored windows. `courtSports` are the sports the court offers.
- */
 export function checkSchedule(
   input: UpdateCourtSchedule,
   courtSports: readonly string[],
@@ -133,7 +124,6 @@ export function checkSchedule(
   return { windows, issues };
 }
 
-/** The API shape: all seven days, Monday first, with local HH:MM times. */
 export function toCourtSchedule(args: {
   courtId: string;
   timezone: string;
@@ -162,17 +152,11 @@ export function toCourtSchedule(args: {
 }
 
 export interface SlotTime {
-  /** Minutes after local midnight of the date asked for; past 1440 after midnight. */
   startMinute: number;
   startsAt: Date;
   endsAt: Date;
 }
 
-/**
- * Every booking of `minutes` that can start on local `date`: from each window's opening time,
- * every start step, as long as the booking ends by closing time. A window that runs past
- * midnight belongs to the day it opened. The slot grid (TURF-204) builds on this.
- */
 export function startsForDay(
   schedule: { startStepMinutes: number; windows: StoredWindow[]; timezone: string },
   date: string,

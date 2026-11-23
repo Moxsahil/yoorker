@@ -1,5 +1,5 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { CalendarRangeIcon, Clock3Icon, IndianRupeeIcon, SmartphoneIcon } from "lucide-react";
+import { CalendarRangeIcon, IndianRupeeIcon, SmartphoneIcon } from "lucide-react";
 import { useMemo, useState } from "react";
 
 import { useRouter, useSearchParams } from "@/kit/framework";
@@ -22,7 +22,6 @@ import {
   REASON_LABEL,
   SPORT_LABEL,
   todayAt,
-  WEEKDAY_SHORT,
   type BlockReason,
   type CourtGrid,
   type CourtPrices,
@@ -34,9 +33,9 @@ import { DEV_NOTES } from "@/lib/dev-notes";
 
 import { LiveBadge, NoVenue } from "./common";
 import { PricesCard } from "./prices-editor";
+import { ScheduleCard } from "./schedule-editor";
 import { AvailabilitySkeleton } from "./page-skeletons";
 
-/** "2026-11-19T12:30:00.000Z" → "2026-11-19T18:00" at the venue. */
 function localDateTime(iso: string, timeZone: string): string {
   const d = new Date(iso);
   const date = new Intl.DateTimeFormat("en-CA", { timeZone }).format(d);
@@ -85,8 +84,6 @@ function WeekGrid({
 }) {
   const client = useQueryClient();
   const today = todayAt(timezone);
-  // Bookings come from the sample data (and walk-ins added by hand) until the bookings API
-  // arrives in Sprint 3; free, blocked and past cells are the real grid.
   const manual = useManualBookings((state) => state.bookings);
   const booked = useMemo(
     () =>
@@ -227,7 +224,6 @@ function WeekGrid({
                         ? bookingAt(day.date, cell.start)
                         : undefined;
                     const status = booking ? "BOOKED" : cell.status;
-                    // A booking spans several cells; only its first cell carries the text.
                     const first = booking && booking.start === cell.start;
                     const bookingEnd = booking
                       ? clock(minutesOf(booking.start) + booking.minutes)
@@ -375,7 +371,8 @@ export function AvailabilityPage() {
   const router = useRouter();
   const { venue, courts, role, loading } = useCurrentVenue();
   const manager = role === "OWNER" || role === "MANAGER";
-  const courtId = courts.find((c) => c.id === params.get("court"))?.id ?? courts[0]?.id;
+  const court = courts.find((c) => c.id === params.get("court")) ?? courts[0];
+  const courtId = court?.id;
   const schedule = useQuery({
     queryKey: ["schedule", courtId],
     queryFn: () => api<CourtSchedule>(`/courts/${courtId}/schedule`),
@@ -425,41 +422,11 @@ export function AvailabilityPage() {
       />
 
       <div className="grid gap-4 xl:grid-cols-3">
-        <Widget>
-          <WidgetHeader title="Hours & booking lengths" icon={Clock3Icon} />
-          {!schedule.data ? (
-            <Skeleton className="m-(--card-spacing) h-40" />
-          ) : (
-            <div className="flex flex-col gap-4 px-(--card-spacing) pb-(--card-spacing) text-sm">
-              <div className="flex flex-wrap gap-1.5">
-                {schedule.data.durations.map((d) => (
-                  <Badge key={`${d.minutes}-${d.sport}`} variant="secondary">
-                    {d.label ? `${d.label} · ` : ""}
-                    {lengthLabel(d.minutes)}
-                    {d.sport ? ` · ${SPORT_LABEL[d.sport]}` : ""}
-                  </Badge>
-                ))}
-              </div>
-              <p className="text-xs text-muted-foreground">
-                Bookings can start every {schedule.data.startStepMinutes} minutes.
-              </p>
-              <ul className="flex flex-col gap-1.5">
-                {schedule.data.days.map((day) => (
-                  <li key={day.weekday} className="grid grid-cols-[2.5rem_1fr] gap-2">
-                    <span className="text-muted-foreground">{WEEKDAY_SHORT[day.weekday - 1]}</span>
-                    <span className="font-mono text-xs tabular-nums">
-                      {day.windows.length === 0 ? (
-                        <span className="text-muted-foreground">Closed</span>
-                      ) : (
-                        day.windows.map((w) => `${w.opens}–${w.closes}`).join(", ")
-                      )}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-        </Widget>
+        {schedule.data && court ? (
+          <ScheduleCard court={court} schedule={schedule.data} manager={manager} />
+        ) : (
+          <Skeleton className="h-64 rounded-2xl" />
+        )}
 
         {!manager ? (
           <Widget className="xl:col-span-2">

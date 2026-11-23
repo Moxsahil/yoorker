@@ -21,10 +21,6 @@ const DOTS: Record<Tone, string> = {
   muted: "bg-muted-foreground",
 };
 
-/**
- * One badge for every status in the app. Colours come from the theme's
- * status tokens, so a preset change recolours every status at once.
- */
 export function StatusBadge({
   tone,
   children,

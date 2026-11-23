@@ -68,7 +68,6 @@ import { VenueDetailSkeleton, VenuesSkeleton } from "./page-skeletons";
 
 const errorText = (error: unknown) => (error instanceof ApiError ? error.message : String(error));
 
-/** "IST" for Asia/Kolkata, or the zone name for anything else. */
 const zoneLabel = (timeZone: string) =>
   new Intl.DateTimeFormat("en-IN", { timeZone, timeZoneName: "short" })
     .formatToParts(new Date())
@@ -95,10 +94,6 @@ function BookingStatus({ active }: { active: boolean }) {
     </StatusBadge>
   );
 }
-
-// ---------------------------------------------------------------------------
-// Venue list
-// ---------------------------------------------------------------------------
 
 export function VenuesPage() {
   const { venues, organisations, loading } = useAllVenues();
@@ -144,8 +139,6 @@ export function VenuesPage() {
       {venues.length === 0 ? (
         <NoVenue />
       ) : (
-        // Columns follow the space the page actually has (sidebar open or closed), so every
-        // row is full: 5 across on a wide screen, down to 1 on a phone.
         <div className="@container">
           <div className="grid grid-cols-1 gap-4 @2xl:grid-cols-2 @4xl:grid-cols-3 @6xl:grid-cols-4 @[88rem]:grid-cols-5">
             {venues.map((venue, i) => {
@@ -232,16 +225,11 @@ export function VenuesPage() {
   );
 }
 
-// ---------------------------------------------------------------------------
-// One venue
-// ---------------------------------------------------------------------------
-
 export function VenueDetailPage({ venueId }: { venueId: string }) {
   const client = useQueryClient();
   const { venues, loading } = useAllVenues();
   const venue = venues.find((v) => v.id === venueId);
   const { manager } = useRole(venue);
-  // The top bar reads "Venues & courts › Green Arena" instead of the venue's id.
   useBreadcrumbLabel(venue?.name ?? null);
   const courts = useCourts(venue?.id);
   const [editing, setEditing] = useState(false);
@@ -543,11 +531,6 @@ export function VenueDetailPage({ venueId }: { venueId: string }) {
   );
 }
 
-// ---------------------------------------------------------------------------
-// Dialogs
-// ---------------------------------------------------------------------------
-
-/** The ⋯ menu on a venue card. */
 function VenueMenu({
   venue,
   onEdit,
@@ -608,7 +591,6 @@ function DeleteVenueDialog({
 
   const confirm = () => {
     remove(venue.id);
-    // If the sidebar was on this venue, move it to another one.
     const next = venues.find((v) => v.id !== venue.id);
     if (venueId === venue.id && next) choose(next.id);
     toast.add({
@@ -668,7 +650,6 @@ function DeleteVenueDialog({
   );
 }
 
-/** One item per line, blanks dropped. */
 const lines = (text: string) =>
   text
     .split("\n")
@@ -800,7 +781,6 @@ function EditVenueDialog({
   );
 }
 
-/** Add a court, or edit one when `court` is given. */
 function CourtDialog({
   venueId,
   court,

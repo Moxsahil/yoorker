@@ -1,7 +1,3 @@
-/**
- * Shared number and time formatting: percentages and "3 hours ago".
- */
-
 interface FormatOptions {
   locale?: string;
 }
@@ -17,7 +13,6 @@ function numberFormat(key: string, create: () => Intl.NumberFormat): Intl.Number
   return cache.get(key) as Intl.NumberFormat;
 }
 
-/** `0.1234` → `12.3%`. */
 export function formatPercent(
   ratio: number,
   options: FormatOptions & { decimals?: number; signed?: boolean } = {},
@@ -47,7 +42,6 @@ const RELATIVE_STEPS: [Intl.RelativeTimeFormatUnit, number][] = [
   ["minute", 60],
 ];
 
-/** "3 hours ago", "yesterday", "in 2 days". */
 export function formatRelative(
   value: string | Date,
   now: Date = new Date(),
@@ -69,7 +63,6 @@ export function formatRelative(
   return format.format(0, "minute");
 }
 
-/** Change between two values as a ratio, or null when there is nothing to compare with. */
 export function change(current: number, previous: number): number | null {
   if (previous === 0) {
     return current === 0 ? 0 : null;

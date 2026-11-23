@@ -12,13 +12,7 @@ import { cn } from "@/lib/utils";
 
 import { formatPercent } from "../data/format";
 
-/**
- * The dashboard widget frame: a soft, borderless card. Every widget in the
- * kit (small, horizontal, XL) is built from this and the parts below, so they
- * share spacing, type and the monospace number style.
- */
 export function Widget({ className, children }: { className?: string; children: React.ReactNode }) {
-  // Fades in on mount (@starting-style), so a widget replacing its skeleton arrives rather than flashes.
   return (
     <Card
       className={cn(
@@ -40,9 +34,7 @@ export function WidgetHeader({
 }: {
   title: React.ReactNode;
   icon?: React.ComponentType<{ className?: string }>;
-  /** A link or control on the right, such as "View all". */
   action?: React.ReactNode;
-  /** DropdownMenuItems for the ⋮ menu. */
   menu?: React.ReactNode;
   className?: string;
 }) {
@@ -76,7 +68,6 @@ export function WidgetHeader({
   );
 }
 
-/** ↑ 2.5% in green or ↓ 1.2% in red. `invert` for metrics where down is good. */
 export function Delta({
   value,
   invert = false,
@@ -106,7 +97,6 @@ export function Delta({
   );
 }
 
-/** The big monospace figure with its change and a quiet caption. */
 export function WidgetValue({
   value,
   delta,
@@ -126,7 +116,6 @@ export function WidgetValue({
   return (
     <div className={cn("flex flex-col gap-1 px-(--card-spacing)", className)}>
       <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-        {/* Keyed by the figure, so a new value (another date range, say) rises in instead of swapping silently. */}
         <span
           key={typeof value === "string" || typeof value === "number" ? value : undefined}
           className={cn(

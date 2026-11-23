@@ -20,7 +20,6 @@ afterAll(async () => {
   await t?.stop();
 });
 
-// Sector 57, Gurugram
 const SECTOR_57 = { lng: 77.0878, lat: 28.4211 };
 
 async function seedVenue(slug: string) {
@@ -74,7 +73,6 @@ describe("schema", () => {
 
   it("makes a phone number unique only once it is verified", async () => {
     const phone = "+919812345678";
-    // Two people can type the same number; neither has proved it.
     await t.db.insertInto("app_user").values({ phone }).execute();
     await t.db.insertInto("app_user").values({ phone }).execute();
     await t.db
@@ -212,7 +210,6 @@ describe("schema", () => {
 
   it("finds a venue within 5 km of a point", async () => {
     const { venueId } = await seedVenue("nearby-turf");
-    // About 2 km away, near Sector 56.
     const near = point(77.1, 28.435);
     const rows = await t.db
       .selectFrom("venue")

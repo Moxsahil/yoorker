@@ -18,7 +18,6 @@ const id = new ParseUUIDPipe();
 export class SlotsController {
   constructor(private readonly slots: SlotsService) {}
 
-  /** Public: players browse slots from a shared link before signing in. */
   @Public()
   @Get("slots")
   list(

@@ -1,10 +1,6 @@
 import { BadRequestException, type PipeTransform } from "@nestjs/common";
 import type { z } from "zod";
 
-/**
- * Validates a request part against a schema from @yoorker/contracts:
- * `@Body(new ZodValidationPipe(createVenueSchema)) body: CreateVenue`
- */
 export class ZodValidationPipe<T extends z.ZodType> implements PipeTransform {
   constructor(private readonly schema: T) {}
 

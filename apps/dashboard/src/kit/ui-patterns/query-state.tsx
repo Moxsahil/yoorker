@@ -7,7 +7,6 @@ import {
   EmptyTitle,
 } from "@/components/ui/empty";
 
-/** The empty state for a list or panel with nothing in it yet. */
 export function EmptyState({
   icon: Icon,
   title,

@@ -1,10 +1,6 @@
 import { api } from "./api";
 import type { Court, Organisation, Venue } from "./yoorker";
 
-/**
- * Creates "Green Arena" through the real API: three courts, their hours, booking lengths,
- * prices and a maintenance block tomorrow morning. Everything it makes is ordinary data.
- */
 export async function loadDemoVenue(existingOrganisationId?: string): Promise<Venue> {
   const organisationId =
     existingOrganisationId ??
@@ -73,7 +69,6 @@ export async function loadDemoVenue(existingOrganisationId?: string): Promise<Ve
     ],
     days: turfWeek,
   });
-  // Fixed 3 h 30 m slots, the way a cricket ground sells them.
   const slots = ["06:00-09:30", "12:00-15:30", "17:30-21:00", "21:00-00:30"].map((s) => {
     const [opens, closes] = s.split("-");
     return { opens, closes };

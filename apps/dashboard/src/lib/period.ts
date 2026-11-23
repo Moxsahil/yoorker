@@ -1,8 +1,3 @@
-/**
- * The Overview's reporting period: today, the last 7 or 30 days, or a custom range of local
- * dates. Every figure is compared with the period of the same length just before it.
- */
-
 export const PERIODS = ["today", "7d", "30d", "custom"] as const;
 export type Period = (typeof PERIODS)[number];
 
@@ -13,11 +8,9 @@ export const PERIOD_LABEL: Record<Period, string> = {
   custom: "Custom",
 };
 
-/** The longest custom range. */
 export const MAX_CUSTOM_DAYS = 92;
 
 export interface DateRange {
-  /** Local dates, both included. */
   from: string;
   to: string;
   days: number;
@@ -35,7 +28,6 @@ export function daysBetween(from: string, to: string): number {
   );
 }
 
-/** Every local date from `from` to `to`. */
 export function datesIn(range: DateRange): string[] {
   return Array.from({ length: range.days }, (_, i) => addDays(range.from, i));
 }
@@ -54,7 +46,6 @@ export function resolvePeriod(
   return { from: addDays(to, -(days - 1)), to, days };
 }
 
-/** The same number of days immediately before. */
 export function previousOf(range: DateRange): DateRange {
   return {
     from: addDays(range.from, -range.days),
@@ -71,7 +62,6 @@ const fmt = (date: string, withYear = false) =>
     timeZone: "UTC",
   });
 
-/** "13–19 Nov", "28 Oct – 3 Nov", "Thu 19 Nov" */
 export function rangeLabel(range: DateRange): string {
   if (range.days === 1) {
     return new Date(`${range.from}T12:00:00Z`).toLocaleDateString("en-IN", {

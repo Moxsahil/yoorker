@@ -12,7 +12,6 @@ import { loadDemoVenue } from "@/lib/seed";
 import { useCurrentVenue, useRefreshAll, useVenueChoice } from "@/lib/session";
 import { DEV_NOTES } from "@/lib/dev-notes";
 
-/** Marks a widget whose numbers are sample data until its sprint ships. */
 export function SampleBadge({ sprint }: { sprint?: string }) {
   if (!DEV_NOTES) return null;
   return (
@@ -26,7 +25,6 @@ export function SampleBadge({ sprint }: { sprint?: string }) {
   );
 }
 
-/** Marks a widget fed by the real Yoorker API. */
 export function LiveBadge() {
   if (!DEV_NOTES) return null;
   return (

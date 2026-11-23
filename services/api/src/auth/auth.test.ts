@@ -12,7 +12,6 @@ import { MembershipService } from "./membership.service";
 import { OTP_SENDER, type OtpSender } from "./otp-sender";
 import { SESSION_COOKIE } from "./session.service";
 
-/** Keeps the last code per phone instead of sending it. */
 class CapturingOtpSender implements OtpSender {
   readonly codes = new Map<string, string>();
   async send(phone: string, code: string) {
@@ -55,7 +54,6 @@ async function requestCode(phone: string) {
   return otpRequestResponseSchema.parse(res.body).challengeId;
 }
 
-/** Signs in and returns the session cookie header. */
 async function signIn(phone: string, e164: string) {
   const challengeId = await requestCode(phone);
   const res = await http()
@@ -90,7 +88,6 @@ describe("auth", () => {
 
   it("signs the same phone into the same user", async () => {
     const first = await signIn("+91 91234 56780", "+919123456780");
-    // The resend cooldown applies per phone, so move the first code's timestamp back.
     await sql`UPDATE otp_challenge SET created_at = now() - interval '1 minute'
               WHERE phone = '+919123456780'`.execute(t.db);
     const second = await signIn("09123456780", "+919123456780");

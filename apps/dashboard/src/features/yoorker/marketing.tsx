@@ -53,7 +53,6 @@ interface Campaign {
   name: string;
   channel: Channel;
   audience: AudienceId;
-  /** When it went out, or will. */
   date: string;
   sent: number;
   read: number;
@@ -300,7 +299,6 @@ function CampaignDialog({
             </div>
           </div>
 
-          {/* What a player sees, and what it costs. */}
           <div className="flex flex-col gap-3">
             <span className="text-sm font-medium">Preview</span>
             <div className="flex flex-col gap-2 rounded-xl bg-muted/60 p-3">
@@ -347,7 +345,6 @@ function CampaignDialog({
   );
 }
 
-/** Copy text to the clipboard and say so. */
 async function copy(text: string, what: string) {
   try {
     await navigator.clipboard.writeText(text);
@@ -360,7 +357,6 @@ async function copy(text: string, what: string) {
   }
 }
 
-/** The venue's booking link and a ready-to-send WhatsApp message, both one tap to copy. */
 function BookingLinkCard({
   link,
   venueName,
@@ -456,7 +452,6 @@ export function MarketingPage() {
   const [creating, setCreating] = useState(false);
   const list = campaigns ?? demoCampaigns(today);
 
-  // Groups of players, counted from the sample bookings.
   const audiences = useMemo(() => {
     const bookings = demoBookings(
       today,
@@ -655,7 +650,6 @@ export function MarketingPage() {
             <p className="text-sm text-muted-foreground">
               Stick it at the gate and the counter, so walk-ins book online next time.
             </p>
-            {/* A placeholder pattern; the real poster has a scannable code. */}
             <div className="flex flex-1 items-center gap-4 rounded-xl bg-muted/50 p-4">
               <div
                 className="grid size-24 shrink-0 grid-cols-7 gap-0.5 rounded-md bg-white p-2"

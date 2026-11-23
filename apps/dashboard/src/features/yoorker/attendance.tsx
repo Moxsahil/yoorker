@@ -35,7 +35,6 @@ import { addDays } from "@/lib/period";
 import { cn } from "@/lib/utils";
 import { dayLabel, inr, WEEKDAY_SHORT } from "@/lib/yoorker";
 
-/** Present, half day, paid leave, absent, weekly off. */
 type Mark = "P" | "H" | "L" | "A" | "O";
 
 const MARK: Record<Mark, { label: string; cell: string; dot: string; short: string }> = {
@@ -71,14 +70,12 @@ const MARK: Record<Mark, { label: string; cell: string; dot: string; short: stri
   },
 };
 
-/** SAMPLE monthly salaries, in paise, until payroll arrives. */
 const SAMPLE_SALARY: Record<TeamMember["role"], number> = {
   OWNER: 0,
   MANAGER: 2_500_000,
   STAFF: 1_400_000,
 };
 
-/** FNV-1a with a final mix, so neighbouring dates give unrelated numbers. */
 const hash = (text: string) => {
   let h = 0x811c9dc5;
   for (const ch of text) h = Math.imul(h ^ ch.charCodeAt(0), 0x01000193);
@@ -90,7 +87,6 @@ const hash = (text: string) => {
 
 const weekdayOf = (date: string) => new Date(`${date}T12:00:00Z`).getUTCDay() || 7;
 
-/** Each person's weekly day off, fixed per person. */
 const offDay = (member: TeamMember) => (hash(member.id) % 7) + 1;
 
 const daysOf = (month: string) => {
@@ -134,7 +130,6 @@ interface Totals {
   A: number;
   unmarked: number;
   workingDays: number;
-  /** Present + leave + half of half days. */
   paidDays: number;
   payablePaise: number;
 }
@@ -167,14 +162,7 @@ function totalsFor(
   return t;
 }
 
-export function AttendanceTab({
-  team,
-  today,
-}: {
-  /** Signed-in members only; owners and pending invites are left out. */
-  team: TeamMember[];
-  today: string;
-}) {
+export function AttendanceTab({ team, today }: { team: TeamMember[]; today: string }) {
   const [month, setMonth] = useState(today.slice(0, 7));
   const [edits, setEdits] = useState<Record<string, Mark | null>>({});
   const [salaries, setSalaries] = useState<Record<string, number>>({});

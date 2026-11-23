@@ -1,12 +1,6 @@
 import { defineTheme } from "@/kit/customizer/settings";
 import { LIBRARY_PRESETS } from "@/kit/theme/library";
 
-/**
- * Yoorker's look, as the Kit customizer sees it. The default preset is the
- * slate and cobalt theme in app/globals.css, so its token lists are empty; the
- * Kit's library presets restyle every surface for anyone who wants another
- * world. `config/theme.test.ts` checks every preset against the Kit contract.
- */
 export const THEME = defineTheme({
   defaults: {
     preset: "default",

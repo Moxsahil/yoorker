@@ -22,7 +22,6 @@ import { DB } from "../database/database.module";
 const ANY_MEMBER: readonly MemberRole[] = ["OWNER", "MANAGER", "STAFF"];
 const MANAGERS: readonly MemberRole[] = ["OWNER", "MANAGER"];
 
-/** A court the user may act on, with what its schedule and prices need. */
 export interface CourtAccess {
   id: string;
   venueId: string;
@@ -85,7 +84,6 @@ function toVenue({ lat, lng, citySlug, cityName, cityState, ...rest }: VenueRow)
   };
 }
 
-/** "Gurugram" -> "gurugram", "New Delhi" -> "new-delhi". */
 function slugify(text: string): string {
   const slug = text
     .normalize("NFKD")
@@ -98,10 +96,6 @@ function slugify(text: string): string {
   return slug || "city";
 }
 
-/**
- * The city's id, creating the city the first time an owner lists a venue there.
- * Matching ignores case; the same name in two states gets a state-suffixed slug.
- */
 async function cityIdFor(
   trx: Kysely<Database>,
   city: CityInput,
@@ -141,9 +135,6 @@ export class VenuesService {
     private readonly audit: AuditService,
   ) {}
 
-  // ---- Organisations -----------------------------------------------------
-
-  /** Any signed-in user can start an organisation and becomes its OWNER. */
   async createOrganisation(actor: Actor, input: CreateOrganisation): Promise<Organisation> {
     return this.db.transaction().execute(async (trx) => {
       const org = await trx
@@ -180,8 +171,6 @@ export class VenuesService {
     await this.memberships.requireRole(actor.userId, organisationId, MANAGERS);
     return this.audit.listForOrganisation(organisationId);
   }
-
-  // ---- Venues ------------------------------------------------------------
 
   async listVenues(actor: Actor, organisationId: string): Promise<Venue[]> {
     await this.memberships.requireRole(actor.userId, organisationId, ANY_MEMBER);
@@ -232,7 +221,6 @@ export class VenuesService {
     }
   }
 
-  /** The venue, if the user belongs to its organisation; otherwise 404. */
   async getVenue(actor: Actor, venueId: string, roles = ANY_MEMBER): Promise<Venue> {
     const row = await selectVenues(this.db).where("venue.id", "=", venueId).executeTakeFirst();
     if (!row) throw new NotFoundException("Venue not found");
@@ -286,9 +274,6 @@ export class VenuesService {
     }
   }
 
-  // ---- Courts ------------------------------------------------------------
-
-  /** The court, if the user holds one of `roles` in its organisation; otherwise 404. */
   async getCourtAccess(
     actor: Actor,
     courtId: string,

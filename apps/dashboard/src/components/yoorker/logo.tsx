@@ -1,10 +1,5 @@
 import { useId } from "react";
 
-/**
- * Yoorker's mark: a Y on the blue brand tile, with a ball at its foot. A yorker is the
- * delivery that lands right at the batter's feet. Full colour, so it reads the same on
- * light, dark and the auth panel. public/favicon.svg is the same drawing.
- */
 export function YoorkerMark({ className }: { className?: string }) {
   const tile = useId();
   return (

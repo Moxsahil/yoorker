@@ -178,7 +178,6 @@ export function ReviewsPage() {
         meta={<SampleBadge />}
       />
 
-      {/* The summary runs across the top, so nothing sits beside the long list. */}
       <Widget>
         <WidgetHeader title="Rating" icon={StarIcon} />
         <div className="grid gap-6 px-(--card-spacing) md:grid-cols-[auto_minmax(0,1fr)] lg:grid-cols-[auto_minmax(0,34rem)_minmax(0,18rem)] lg:justify-between lg:gap-12">

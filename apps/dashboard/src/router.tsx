@@ -29,15 +29,10 @@ import {
 import { CustomizerProvider } from "@/kit/customizer/customizer-provider";
 import { QueryProvider } from "@/kit/data/query-provider";
 
-/** A page's tab title, "Bookings · Yoorker". React puts <title> in the document head. */
 function Title({ children }: { children: string }) {
   return <title>{`${children} · Yoorker`}</title>;
 }
 
-/**
- * Each page is its own chunk, loaded when it is first opened. Navigations run as transitions,
- * so the current page stays on screen until the next one is ready.
- */
 function page<M>(
   title: string,
   load: () => Promise<M>,
@@ -49,7 +44,6 @@ function page<M>(
     return (
       <>
         <Title>{title}</Title>
-        {/* While the page's code loads, its skeleton; the shell stays as it is. */}
         <Suspense fallback={<Loading />}>
           <Page />
         </Suspense>
@@ -156,7 +150,6 @@ const SignIn = page(
   (m) => m.YoorkerSignIn,
 );
 
-/** App-wide providers, inside the router so they can read and write the address. */
 function Root() {
   return (
     <ThemeProvider defaultTheme="system">

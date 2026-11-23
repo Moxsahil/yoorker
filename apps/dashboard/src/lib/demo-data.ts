@@ -105,15 +105,10 @@ function people(random: () => number, count: number) {
   return list;
 }
 
-/** How many days of history the sample covers: enough for a 92-day range and the one before. */
 export const SAMPLE_HISTORY_DAYS = 200;
 
 const cache = new Map<string, DemoBooking[]>();
 
-/**
- * Bookings from 200 days ago to 7 days ahead, around `today`. The pool of regular players
- * grows over time, so some customers book for the first time in any recent period.
- */
 export function demoBookings(today: string, courts: string[]): DemoBooking[] {
   const key = `${today}|${courts.join(",")}`;
   const hit = cache.get(key);
@@ -126,14 +121,12 @@ export function demoBookings(today: string, courts: string[]): DemoBooking[] {
     const date = addDays(today, offset);
     const weekend = [0, 6].includes(new Date(`${date}T12:00:00Z`).getUTCDay());
     for (const court of names) {
-      // A court holds one booking at a time: skip start times inside the previous booking.
       let freeFrom = 0;
       const cricket = /cricket/i.test(court);
       const hours = cricket ? [6, 12, 17.5, 21] : [6, 7, 8, 16, 17, 18, 19, 20, 21, 22];
       for (const hour of hours) {
         const busy = (hour >= 17 ? 0.8 : 0.35) + (weekend ? 0.15 : 0);
         if (random() > busy) continue;
-        // Regulars first; newer players join the pool as the venue grows.
         const pool = Math.min(crowd.length, 30 + Math.floor((offset + SAMPLE_HISTORY_DAYS) * 0.95));
         const who =
           random() < 0.55 ? crowd[Math.floor(random() * 30)]! : crowd[Math.floor(random() * pool)]!;

@@ -29,10 +29,6 @@ export class SlotsService {
     private readonly venues: VenuesService,
   ) {}
 
-  /**
-   * Bookable slots for one day, for anyone (no sign-in): only active courts at active
-   * venues, only from today up to BOOKING_WINDOW_DAYS ahead, and never slots already started.
-   */
   async publicSlots(courtId: string, query: SlotsQuery): Promise<CourtSlots> {
     const court = await this.db
       .selectFrom("court")
@@ -66,7 +62,6 @@ export class SlotsService {
     };
   }
 
-  /** The owner's week grid: every start-step cell inside opening hours, for members. */
   async grid(actor: Actor, courtId: string, query: GridQuery): Promise<CourtGrid> {
     const court = await this.venues.getCourtAccess(actor, courtId, ANY_MEMBER);
     const to = addDays(query.from, query.days - 1);
@@ -83,7 +78,6 @@ export class SlotsService {
     };
   }
 
-  /** The next bookable slots of `minutes` from now, e.g. "free at 6 PM" on venue cards. */
   async nextFreeSlots(
     courtId: string,
     minutes: number,
@@ -103,7 +97,6 @@ export class SlotsService {
     return nextFree(calendar, today, minutes, packagePrice, now, { ...options, days });
   }
 
-  /** The length must be one the court offers, for every sport or the one asked for. */
   private async requireBookingLength(courtId: string, query: SlotsQuery): Promise<void> {
     const lengths = await this.db
       .selectFrom("court_duration")
@@ -118,7 +111,6 @@ export class SlotsService {
     }
   }
 
-  /** Schedule, prices and the blocks that touch local dates `from` to `to` (inclusive). */
   private async loadCalendar(
     courtId: string,
     timezone: string,

@@ -7,15 +7,9 @@ interface SegmentedOption<T extends string> {
   value: T;
   label: React.ReactNode;
   icon?: React.ComponentType;
-  /** Accessible name when the label is an icon only. */
   ariaLabel?: string;
 }
 
-/**
- * Where the pressed option sits inside the track, kept in sync on resize.
- * `ready` stays false for the first measurement, so the pill appears in place
- * instead of sliding in from the corner.
- */
 function usePressedRect(track: React.RefObject<HTMLDivElement | null>, value: string) {
   const [rect, setRect] = useState<{
     left: number;
@@ -109,11 +103,6 @@ function useSlide(
   }, [pill, rect, ready]);
 }
 
-/**
- * A segmented control: a muted track with the selected option raised on a
- * pill that slides between options. Built on ToggleGroup, so it keeps roving
- * focus and arrow-key navigation.
- */
 export function Segmented<T extends string>({
   value,
   onChange,
@@ -153,7 +142,6 @@ export function Segmented<T extends string>({
           ref={pill}
           aria-hidden
           className="pointer-events-none absolute top-0 left-0 rounded-md bg-background shadow-sm dark:bg-input/50"
-          // Position is measured, so it is data.
           style={{
             translate: `${rect.left}px ${rect.top}px`,
             width: rect.width,

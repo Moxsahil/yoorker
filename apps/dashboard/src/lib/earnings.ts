@@ -6,7 +6,6 @@
 import type { DemoBooking } from "./demo-data";
 import { addDays, type DateRange } from "./period";
 
-/** Yoorker's commission on money collected online. A placeholder until pricing is agreed. */
 export const COMMISSION_RATE = 0.05;
 
 export type Method = "UPI" | "CARD" | "CASH" | "COUNTER_UPI";
@@ -18,7 +17,6 @@ export const METHOD_LABEL: Record<Method, string> = {
   COUNTER_UPI: "UPI at counter",
 };
 
-/** Online money goes through Yoorker; the rest is taken at the venue. */
 export const ONLINE: Method[] = ["UPI", "CARD"];
 
 const hash = (text: string) => [...text].reduce((h, ch) => (h * 31 + ch.charCodeAt(0)) >>> 0, 7);
@@ -34,32 +32,24 @@ export type TxStatus = "PAID" | "REFUNDED" | "PENDING";
 export interface Transaction {
   booking: DemoBooking;
   method: Method;
-  /** Positive money in, negative money returned. */
   amountPaise: number;
   status: TxStatus;
 }
 
 export interface EarningsSummary {
-  /** Every booking that wasn't cancelled, paid or not. */
   bookingValuePaise: number;
   bookings: number;
-  /** Taken online through Yoorker before refunds (UPI and card). */
   onlinePaise: number;
   upiPaise: number;
   cardPaise: number;
-  /** Taken at the venue: cash and UPI at the counter. */
   venuePaise: number;
   cashPaise: number;
   counterPaise: number;
-  /** Returned to players for cancelled online bookings. */
   refundsPaise: number;
   refunds: number;
   commissionPaise: number;
-  /** Online money after refunds and commission: what Yoorker pays into the bank. */
   payoutPaise: number;
-  /** Payout plus money taken at the venue. */
   netPaise: number;
-  /** Booked but not paid yet. */
   pendingPaise: number;
 }
 
@@ -92,7 +82,6 @@ export function summarise(all: DemoBooking[], range: DateRange, today: string): 
       s.bookings++;
     }
     if (b.payment === "NOT_PAID") s.pendingPaise += b.pricePaise;
-    // A refunded booking was paid online first, then paid back.
     if (b.payment === "PAID" || (b.payment === "REFUNDED" && online)) {
       if (online) {
         s.onlinePaise += b.pricePaise;
@@ -115,7 +104,6 @@ export function summarise(all: DemoBooking[], range: DateRange, today: string): 
   return s;
 }
 
-/** Money movements in the period, newest first: payments, refunds and amounts still due. */
 export function transactions(all: DemoBooking[], range: DateRange, today: string): Transaction[] {
   return all
     .filter(
@@ -137,15 +125,12 @@ export function transactions(all: DemoBooking[], range: DateRange, today: string
 }
 
 interface Payout {
-  /** Monday the week started. */
   week: string;
-  /** The Monday after, when the money is sent. */
   paidOn: string;
   amountPaise: number;
   status: "PAID" | "UPCOMING";
 }
 
-/** Weekly payouts (Monday to Sunday, sent the next Monday) for the last few weeks. */
 export function payouts(all: DemoBooking[], today: string, weeks = 6): Payout[] {
   const weekday = (new Date(`${today}T12:00:00Z`).getUTCDay() + 6) % 7;
   const thisMonday = addDays(today, -weekday);

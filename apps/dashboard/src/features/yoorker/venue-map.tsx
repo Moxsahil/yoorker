@@ -4,10 +4,8 @@ import { cn } from "@/lib/utils";
 
 const TILE = 256;
 
-/** Browser key for the Maps Static API, from .env.local. Without it the map uses OpenStreetMap. */
 const GOOGLE_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
 
-/** Quiet map styles: no shops or bus stops, and a dark version that matches the dashboard. */
 const BASE_STYLE = ["feature:poi|visibility:off", "feature:transit|visibility:off"];
 const DARK_STYLE = [
   "element:geometry|color:0x1d2127",
@@ -23,7 +21,6 @@ const DARK_STYLE = [
 ];
 
 function Pin() {
-  // The pin's tip sits exactly on the venue, which is the centre of the map.
   return (
     <svg
       viewBox="0 0 24 32"
@@ -40,10 +37,6 @@ function Pin() {
   );
 }
 
-/**
- * A small map of the venue, centred on it. Uses Google Maps when VITE_GOOGLE_MAPS_API_KEY
- * is set (the same Google Cloud project as the real app), otherwise OpenStreetMap tiles.
- */
 export function VenueMap(props: {
   lat: number;
   lng: number;
@@ -74,7 +67,6 @@ function GoogleMap({
   const params = new URLSearchParams({
     center: `${lat},${lng}`,
     zoom: String(zoom),
-    // The largest free size at double density; object-cover crops it around the centre.
     size: "640x400",
     scale: "2",
     key: apiKey,
@@ -84,7 +76,6 @@ function GoogleMap({
 
   return (
     <div className={cn("relative isolate overflow-hidden rounded-xl border bg-muted", className)}>
-      {/* Wait for the theme, so a dark dashboard never loads the light map first. */}
       {resolvedTheme && (
         <img
           src={`https://maps.googleapis.com/maps/api/staticmap?${params}`}
@@ -125,7 +116,6 @@ function OsmMap({
 }) {
   const n = 2 ** zoom;
   const rad = (lat * Math.PI) / 180;
-  // Where the point sits in the world, in tiles (Web Mercator).
   const x = ((lng + 180) / 360) * n;
   const y = ((1 - Math.log(Math.tan(rad) + 1 / Math.cos(rad)) / Math.PI) / 2) * n;
   const tx = Math.floor(x);

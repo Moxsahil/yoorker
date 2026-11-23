@@ -5,19 +5,11 @@ import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/
 import { cn } from "@/lib/utils";
 
 interface HourDatum {
-  /** Tooltip heading, e.g. "3 PM". */
   label: string;
   current: number;
-  /** The same hour one period earlier. */
   previous: number;
 }
 
-/**
- * A day's rhythm: slim rounded bars per hour in a gradient of the lead
- * colour, the latest hour solid and glowing, and the period before as a soft
- * dashed curve over them. Quiet nights, the lunch bump and the evening peak
- * read at a glance, and so does where this period runs above or below.
- */
 export function HourBars({
   data,
   color = "var(--chart-lead)",
@@ -62,7 +54,6 @@ export function HourBars({
             />
           </filter>
         </defs>
-        {/* One scale for both series, from zero, so the curve and the bars compare directly. */}
         <YAxis hide domain={[0, "dataMax"]} />
         <ChartTooltip
           cursor={false}

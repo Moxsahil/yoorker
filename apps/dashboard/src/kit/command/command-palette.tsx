@@ -35,7 +35,6 @@ export interface CommandPaletteProps {
   runAction: (action: CommandAction) => void;
 }
 
-/** The ⌘K dialog. Loaded lazily by `CommandMenuProvider` on first open. */
 export default function CommandPalette({
   open,
   onOpenChange,

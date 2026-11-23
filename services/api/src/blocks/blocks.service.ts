@@ -72,9 +72,7 @@ export class BlocksService {
     private readonly audit: AuditService,
   ) {}
 
-  /** Blocks the chosen courts of a venue, or all its active courts, for one stretch of time. */
   async createBlocks(actor: Actor, venueId: string, input: CreateBlocks): Promise<Block[]> {
-    // Staff block courts too: rain, a broken net, a match running late.
     const venue = await this.venues.getVenue(actor, venueId, ANY_MEMBER);
     const startsAt = localDateTimeToUtc(input.from, venue.timezone);
     const endsAt = localDateTimeToUtc(input.to, venue.timezone);
@@ -153,7 +151,6 @@ export class BlocksService {
     }
   }
 
-  /** Blocks that touch the local dates from `from` up to (not including) `to`. */
   async listBlocks(actor: Actor, courtId: string, query: ListBlocksQuery): Promise<Block[]> {
     const court = await this.venues.getCourtAccess(actor, courtId, ANY_MEMBER);
     const from = localToUtc(query.from, 0, court.timezone);
@@ -169,7 +166,6 @@ export class BlocksService {
     return rows.map((row) => toBlock(row, court.timezone));
   }
 
-  /** Anyone may remove their own block; owners and managers may remove any block. */
   async removeBlock(actor: Actor, blockId: string): Promise<void> {
     const row = await selectBlocks(this.db).where("blackout.id", "=", blockId).executeTakeFirst();
     if (!row) throw new NotFoundException("Block not found");

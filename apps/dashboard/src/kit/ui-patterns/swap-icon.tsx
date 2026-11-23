@@ -3,11 +3,6 @@ import { useCallback, useEffect, useState } from "react";
 
 import { cn } from "@/lib/utils";
 
-/**
- * Two icons in one spot: `from` until `swapped`, then `to`. They cross-fade
- * and scale, so a copy button visibly turns into a check (transitions.dev
- * "icon swap"). Sizing comes from the parent, as with any button icon.
- */
 export function SwapIcon({
   swapped,
   from: From = CopyIcon,
@@ -33,7 +28,6 @@ export function SwapIcon({
   );
 }
 
-/** Copies text and reports `copied` for 1.5 seconds, for a SwapIcon. */
 export function useCopied(timeout = 1500) {
   const [copied, setCopied] = useState(false);
   useEffect(() => {

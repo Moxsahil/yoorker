@@ -24,7 +24,6 @@ function Badge({ value, beforeAction }: { value: number | undefined; beforeActio
   if (!value) {
     return null;
   }
-  // Links with sub-pages have an expand button in the badge's usual spot.
   return (
     <SidebarMenuBadge className={beforeAction ? "end-8" : undefined}>
       {value > 99 ? "99+" : value}
@@ -44,7 +43,6 @@ function Entry({
   const pathname = usePathname();
   const { setOpenMobile, state, isMobile } = useSidebar();
   const Icon = link.icon;
-  // A section is open on its own page and on any of its sub-pages, wherever they live.
   const inSection =
     isActive(pathname, link.href) ||
     (link.items ?? []).some((item) => isActive(pathname, item.href));
@@ -93,7 +91,6 @@ function Entry({
     </CollapsibleContent>
   );
 
-  // The icon-only sidebar hides sub-pages, so there the row stays a link to `href`.
   if (link.expandOnly && (isMobile || state === "expanded")) {
     return (
       <Collapsible open={open} onOpenChange={setOpen} render={<SidebarMenuItem />}>
@@ -120,7 +117,6 @@ function Entry({
           <Link
             href={link.href}
             onClick={() => {
-              // Going to the section also opens its sub-pages.
               setOpen(true);
               close();
             }}

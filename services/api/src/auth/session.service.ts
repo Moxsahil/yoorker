@@ -12,8 +12,8 @@ export const SESSION_TTL_DAYS = 30;
 
 export function sessionCookieOptions(env: Env): CookieOptions {
   return {
-    httpOnly: true, // page JavaScript can't read it
-    secure: env.NODE_ENV === "production", // HTTPS only outside local dev
+    httpOnly: true,
+    secure: env.NODE_ENV === "production",
     sameSite: "lax",
     path: "/",
     maxAge: SESSION_TTL_DAYS * 24 * 60 * 60 * 1000,
@@ -41,7 +41,6 @@ export class SessionService {
     return { token, sessionId: row.id };
   }
 
-  /** The live session for a token, or null if unknown, expired or signed out. */
   async resolve(token: string): Promise<AuthContext | null> {
     if (!SESSION_TOKEN_PATTERN.test(token)) return null;
     const row = await this.db

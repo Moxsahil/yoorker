@@ -3,10 +3,6 @@ import { buttonVariants } from "@/components/ui/button";
 import { BrandLogo } from "@/components/yoorker/brand-logo";
 import { StatusPage } from "@/kit/states/status-page";
 
-/**
- * A full-page error outside the shell: the brand mark, the Kit's StatusPage,
- * and a way home. Used for unknown addresses.
- */
 export function ErrorScreen({
   code,
   title,

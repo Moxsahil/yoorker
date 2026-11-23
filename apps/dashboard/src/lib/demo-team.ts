@@ -5,11 +5,6 @@
 import { addDays } from "./period";
 import type { Role } from "./yoorker";
 
-// ---------------------------------------------------------------------------
-// Staff
-// ---------------------------------------------------------------------------
-
-/** The parts of the dashboard a team member can open. */
 export const ACCESS = [
   "bookings",
   "checkin",
@@ -25,19 +20,14 @@ export interface TeamMember {
   id: string;
   name: string;
   phone: string;
-  /** OWNER for you; everyone else is MANAGER or STAFF, worked out from their access. */
   role: Role;
-  /** The role name the owner gives them, e.g. "Receptionist". */
   title: string;
-  /** null means every venue. */
   venues: string[] | null;
   access: Access[];
   status: "ACTIVE" | "INVITED";
-  /** Local date, or null for someone who hasn't signed in yet. */
   lastActive: string | null;
 }
 
-/** Settings access makes someone a manager; everyone else is staff. */
 export const roleFor = (access: Access[]): Role =>
   access.includes("settings") ? "MANAGER" : "STAFF";
 
@@ -91,30 +81,20 @@ export function demoTeam(today: string, venues: string[]): TeamMember[] {
   ];
 }
 
-// ---------------------------------------------------------------------------
-// Offers
-// ---------------------------------------------------------------------------
-
 export interface Offer {
   id: string;
   name: string;
-  /** A code players type at checkout, or null for an offer applied automatically. */
   code: string | null;
   kind: "PERCENT" | "FLAT";
-  /** Percent (10 = 10%) or whole rupees off. */
   value: number;
-  /** ISO weekdays, 1 = Monday. */
   weekdays: number[];
   from: string;
   to: string;
-  /** null means every court. */
   courts: string[] | null;
   validFrom: string;
   validTo: string | null;
   used: number;
-  /** null means no limit. */
   limit: number | null;
-  /** Discount given so far, in paise. */
   givenPaise: number;
   enabled: boolean;
 }
@@ -202,10 +182,6 @@ export function offerState(offer: Offer, today: string): OfferState {
   if (offer.validFrom > today) return "SCHEDULED";
   return "ACTIVE";
 }
-
-// ---------------------------------------------------------------------------
-// Reviews
-// ---------------------------------------------------------------------------
 
 export interface Review {
   id: string;

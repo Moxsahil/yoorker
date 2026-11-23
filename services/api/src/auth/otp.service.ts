@@ -34,7 +34,6 @@ export class OtpService {
     @Inject(OTP_SENDER) private readonly sender: OtpSender,
   ) {}
 
-  /** Sends a new code, unless this phone or IP has asked too often. */
   async request(phone: string, ip: string | null): Promise<OtpRequestResponse> {
     // Counted in the database's clock, so app servers with skewed clocks agree.
     // Two requests at the same instant can both pass; the limits are a brake, not a lock.
@@ -84,7 +83,6 @@ export class OtpService {
     };
   }
 
-  /** Checks a code and returns the user id, creating the user on first sign-in. */
   async verify(challengeId: string, code: string): Promise<string> {
     // Spend an attempt first, atomically, so parallel guesses can't exceed the limit.
     const challenge = await this.db

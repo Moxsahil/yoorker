@@ -1,9 +1,5 @@
 import { cn } from "@/lib/utils";
 
-/**
- * A whole-page state: not found, something broke, down for maintenance.
- * `code` is the big figure (404, 500), or an icon when there is no number.
- */
 export function StatusPage({
   code,
   title,

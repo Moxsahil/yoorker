@@ -30,7 +30,6 @@ const AMENITIES = [
   "Equipment on rent",
 ];
 
-/** "Green Arena, Sector 57" → "green-arena-sector-57" */
 const slugify = (text: string) =>
   text
     .toLowerCase()
@@ -39,7 +38,6 @@ const slugify = (text: string) =>
     .replace(/^-+|-+$/g, "")
     .slice(0, 60);
 
-/** Accepts "28.4211, 77.0878", the way Google Maps copies a pin's coordinates. */
 const parseCoords = (text: string) => {
   const match = text.trim().match(/^(-?\d{1,2}(?:\.\d+)?)\s*,\s*(-?\d{1,3}(?:\.\d+)?)$/);
   if (!match) return null;
@@ -83,7 +81,6 @@ export function NewVenuePage() {
   const choose = useVenueChoice((state) => state.choose);
   const { organisations, loading } = useAllVenues();
   const teams = organisations.filter((org) => org.role === "OWNER" || org.role === "MANAGER");
-  // A new owner has no business yet: the first venue creates it too.
   const firstVenue = teams.length === 0;
 
   const [orgId, setOrgId] = useState("");
@@ -105,7 +102,6 @@ export function NewVenuePage() {
   const finalSlug = slug ?? slugify(name);
   const point = parseCoords(coords);
 
-  // Fill only the empty fields, so nothing the owner typed is overwritten.
   const apply = (place: Place) => {
     const found = placeFields(place);
     setCoords(found.coords);
@@ -404,7 +400,6 @@ export function NewVenuePage() {
             </Widget>
           </div>
 
-          {/* The map stays in view while the form scrolls. */}
           <div className="flex flex-col gap-4 lg:sticky lg:top-20">
             <Widget>
               <WidgetHeader title="Location on the map" icon={MapPinIcon} />

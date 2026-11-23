@@ -14,7 +14,6 @@ declare global {
   }
 }
 
-/** `@CurrentAuth() auth: AuthContext` in a handler of a non-public route. */
 export const CurrentAuth = createParamDecorator((_data: unknown, ctx: ExecutionContext) => {
   const req = ctx.switchToHttp().getRequest<Request>();
   if (!req.auth) throw new UnauthorizedException("Sign in required");

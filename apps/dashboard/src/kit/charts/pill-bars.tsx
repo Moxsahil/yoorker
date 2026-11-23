@@ -7,21 +7,10 @@ import { cn } from "@/lib/utils";
 interface PillDatum {
   label: string;
   value: number;
-  /** Tooltip heading; defaults to label. */
   title?: string;
-  /**
-   * For a bar still filling up (today, say): what a typical one reaches. It is
-   * drawn as a dashed outline behind the bar, so a period in progress reads as
-   * "so far" rather than as a gap.
-   */
   expected?: number;
 }
 
-/**
- * The dashed outline of a bar still filling up. It is drawn by the stacked
- * "rest" segment but spans the whole column, down over the filled part, so it
- * reads as one pill: solid so far, dashed for what a typical one reaches.
- */
 function ExpectedOutline(props: Record<string, unknown>) {
   const { x, y, width, height, payload, color, clipId } = props as {
     x: number;
@@ -39,7 +28,6 @@ function ExpectedOutline(props: Record<string, unknown>) {
   const total = height + filled;
   const radius = Math.min(width, total) / 2;
   const inset = 0.75;
-  // The fill is clipped to the pill, so a small "so far" sits in its rounded bottom like liquid instead of floating as its own capsule.
   return (
     <g>
       <clipPath id={clipId}>
@@ -69,11 +57,6 @@ function ExpectedOutline(props: Record<string, unknown>) {
   );
 }
 
-/**
- * Fully rounded bars. One bar is highlighted in the theme's lead chart colour and
- * glows; the rest sit back in a tint of the same colour. Used for "basic bar"
- * small widgets and as a hero chart.
- */
 export function PillBars({
   data,
   color = "var(--chart-lead)",
@@ -86,15 +69,9 @@ export function PillBars({
 }: {
   data: PillDatum[];
   color?: string;
-  /** Which bar to emphasise: the largest, the last, or an index. */
   highlight?: "max" | "last" | number;
   format?: (value: number) => string;
   showLabels?: boolean;
-  /**
-   * Three tiers instead of two: the highlight in full colour, its neighbours in
-   * a tint of it, the rest in neutral grey, so the eye lands on one stretch.
-   * Empty bars still show as a dot, so a quiet slot reads as low, not missing.
-   */
   spotlight?: boolean;
   className?: string;
   barSize?: number;
@@ -107,7 +84,6 @@ export function PillBars({
         ? data.length - 1
         : data.reduce((best, datum, index) => (datum.value > data[best]!.value ? index : best), 0);
   const pending = data.some((datum) => datum.expected !== undefined);
-  // The still-to-come part is stacked on the bar, so the outline and the fill share one column and line up exactly.
   const rows = pending
     ? data.map((datum) => ({
         ...datum,
@@ -197,7 +173,6 @@ export function PillBars({
               <Cell
                 key={`${datum.label}-${index}`}
                 fill={quiet ? "var(--muted-foreground)" : color}
-                // A bar still under its typical level is drawn by ExpectedOutline, clipped to the pill.
                 fillOpacity={
                   datum.expected !== undefined && datum.value < datum.expected
                     ? 0

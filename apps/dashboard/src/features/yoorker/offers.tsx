@@ -32,7 +32,7 @@ import { demoOffers, offerState, type Offer, type OfferState } from "@/lib/demo-
 import { addDays } from "@/lib/period";
 import { useCurrentVenue } from "@/lib/session";
 import { cn } from "@/lib/utils";
-import { dayLabel, inr, todayAt, WEEKDAY_SHORT } from "@/lib/yoorker";
+import { dayLabel, inr, QUARTER_HOURS, todayAt, WEEKDAY_SHORT } from "@/lib/yoorker";
 
 import { SampleBadge } from "./common";
 import { OffersSkeleton } from "./page-skeletons";
@@ -45,11 +45,6 @@ const STATE: Record<OfferState, { label: string; tone: Tone }> = {
 };
 
 type Filter = "all" | "live" | "ended";
-
-const TIMES = Array.from({ length: 96 }, (_, i) => {
-  const m = i * 15;
-  return `${String(Math.floor(m / 60)).padStart(2, "0")}:${String(m % 60).padStart(2, "0")}`;
-});
 
 const daysText = (days: number[]) => {
   const key = [...days].sort().join();
@@ -238,7 +233,7 @@ function OfferDialog({
                 value={from}
                 onChange={(e) => setFrom(e.target.value)}
               >
-                {TIMES.map((t) => (
+                {QUARTER_HOURS.map((t) => (
                   <NativeSelectOption key={t} value={t}>
                     {t}
                   </NativeSelectOption>
@@ -253,7 +248,7 @@ function OfferDialog({
                 value={to}
                 onChange={(e) => setTo(e.target.value)}
               >
-                {TIMES.map((t) => (
+                {QUARTER_HOURS.map((t) => (
                   <NativeSelectOption key={t} value={t}>
                     {t}
                   </NativeSelectOption>

@@ -26,7 +26,6 @@ import {
   type StoredObject,
 } from "../photos/photo-storage";
 
-/** Keeps the last code per phone instead of sending it. */
 export class CapturingOtpSender implements OtpSender {
   readonly codes = new Map<string, string>();
   async send(phone: string, code: string) {
@@ -34,7 +33,6 @@ export class CapturingOtpSender implements OtpSender {
   }
 }
 
-/** Accepts only tokens handed out by `issue`, instead of asking Google. */
 export class FakeGoogleVerifier implements GoogleTokenVerifier {
   private readonly tokens = new Map<string, GoogleProfile>();
 
@@ -49,7 +47,6 @@ export class FakeGoogleVerifier implements GoogleTokenVerifier {
   }
 }
 
-/** Keeps reported errors instead of sending them to Sentry. */
 export class CapturingErrorReporter implements ErrorReporter {
   readonly reports: { error: unknown; context: ErrorContext }[] = [];
   report(error: unknown, context: ErrorContext) {
@@ -57,7 +54,6 @@ export class CapturingErrorReporter implements ErrorReporter {
   }
 }
 
-/** An in-memory bucket; `put` stands in for the browser's upload. */
 export class FakePhotoStorage implements PhotoStorage {
   readonly objects = new Map<string, StoredObject>();
   readonly deleted: string[] = [];
@@ -107,16 +103,13 @@ export interface TestApp {
   errors: CapturingErrorReporter;
   photos: FakePhotoStorage;
   clock: FakeClock;
-  /** Signs in with a 10-digit Indian mobile number; returns the user id and cookie header. */
   signIn(mobile: string): Promise<{ userId: string; cookie: string }>;
-  /** Signs in with a fake Google account; email defaults to <subject>@example.com. */
   signInWithGoogle(
     profile: Partial<GoogleProfile> & { subject: string },
   ): Promise<{ userId: string; cookie: string; me: MeResponse }>;
   close(): Promise<void>;
 }
 
-/** The full API on a throwaway PostGIS database, with the production middleware stack. */
 export async function createTestApp(
   options: { env?: Record<string, string>; controllers?: Type[] } = {},
 ): Promise<TestApp> {

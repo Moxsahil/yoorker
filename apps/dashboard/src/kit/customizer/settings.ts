@@ -1,6 +1,5 @@
 import type { ThemePreset } from "./presets";
 
-/** A font id from the template's `KitTheme.fonts`. */
 export type Font = string;
 export type Scale = "sm" | "md" | "lg";
 export type ContentWidth = "full" | "contained";
@@ -11,7 +10,6 @@ export type Direction = "ltr" | "rtl";
 
 export interface CustomizerSettings {
   preset: string;
-  /** Tokens imported from pasted CSS; overrides the preset when set. */
   custom: { light: Record<string, string>; dark: Record<string, string> } | null;
   radius: string;
   font: Font;
@@ -23,24 +21,18 @@ export interface CustomizerSettings {
   direction: Direction;
 }
 
-/** A UI font the customizer offers. `variable` is what `--font-sans` becomes, e.g. "var(--font-geist)". */
 export interface FontOption {
   id: string;
   label: string;
   variable: string;
 }
 
-/**
- * Everything a template tells the customizer about its look: where it starts,
- * which presets it offers (its own default first) and which fonts.
- */
 export interface KitTheme {
   defaults: CustomizerSettings;
   presets: readonly ThemePreset[];
   fonts: readonly FontOption[];
 }
 
-/** Checks a template's theme config at startup, so a typo fails loudly instead of rendering the wrong theme. */
 export function defineTheme(theme: KitTheme): KitTheme {
   if (theme.presets.length === 0 || theme.fonts.length === 0) {
     throw new Error("KitTheme needs at least one preset and one font.");
@@ -58,16 +50,10 @@ export const STORAGE_KEY = "kit-customizer";
 
 export const SCALE_SIZES: Record<Scale, string> = { sm: "15px", md: "16px", lg: "17px" };
 
-/** Font id to CSS variable, the shape `buildThemeCss` takes. */
 export function fontVariables(fonts: readonly FontOption[]): Record<string, string> {
   return Object.fromEntries(fonts.map((font) => [font.id, font.variable]));
 }
 
-/**
- * Builds the CSS the customizer injects, for the provider and for the
- * before-first-paint boot. An unknown font falls back to the first one the
- * template lists.
- */
 export function buildThemeCss(
   settings: Pick<CustomizerSettings, "preset" | "custom" | "radius" | "font" | "scale">,
   presets: { id: string; light: Record<string, string>; dark: Record<string, string> }[],

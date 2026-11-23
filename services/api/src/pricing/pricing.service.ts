@@ -51,7 +51,6 @@ function toApi(rule: StoredPriceRule): PriceRule {
   };
 }
 
-/** A court's base price and rules, as the pricing engine needs them. */
 export async function loadPriceBook(db: Kysely<Database>, courtId: string): Promise<PriceBook> {
   const { base_price_per_hour_paise } = await db
     .selectFrom("court")
@@ -77,7 +76,6 @@ export async function loadPriceBook(db: Kysely<Database>, courtId: string): Prom
   return { basePricePerHourPaise: base_price_per_hour_paise, rules };
 }
 
-/** The package price of a booking length; a sport's own length comes first. */
 export async function packagePriceFor(
   db: Kysely<Database>,
   courtId: string,
@@ -103,13 +101,11 @@ export class PricingService {
     private readonly audit: AuditService,
   ) {}
 
-  /** Owners and managers see and change prices; staff only get quotes for a booking. */
   async getPrices(actor: Actor, courtId: string): Promise<CourtPrices> {
     const court = await this.venues.getCourtAccess(actor, courtId, MANAGERS);
     return this.toPrices(court.id, await loadPriceBook(this.db, court.id));
   }
 
-  /** Replaces the base price and every rule of the court in one go. */
   async updatePrices(
     actor: Actor,
     courtId: string,
@@ -181,7 +177,6 @@ export class PricingService {
     });
   }
 
-  /** The price of one booking, for the dashboard and the booking desk. */
   async quote(actor: Actor, courtId: string, query: PriceQuoteQuery): Promise<PriceQuote> {
     const court = await this.venues.getCourtAccess(actor, courtId, ANY_MEMBER);
     const book = await loadPriceBook(this.db, court.id);

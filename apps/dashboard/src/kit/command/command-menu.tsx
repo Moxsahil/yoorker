@@ -6,7 +6,6 @@ import type { NavLink } from "../shell/types";
 import { pressedKey } from "../shortcuts/key";
 import { whenIdle } from "../ui-patterns/when-idle";
 
-// The palette (cmdk, the dialog) loads on first open: no page needs it for its first paint.
 const loadPalette = () => import("./command-palette");
 const CommandPalette = lazy(loadPalette);
 
@@ -56,14 +55,9 @@ function flatten(
     },
     ...(link.items ? flatten(link.items, link.title) : []),
   ]);
-  // A parent ("Projects") and its first child ("All projects") often share a page; list it once.
   return all.filter((page, index) => all.findIndex((other) => other.href === page.href) === index);
 }
 
-/**
- * ⌘K palette: jump to any page, run an action, or search records. `search` is
- * called as the user types (debounced) and its results are listed first.
- */
 export function CommandMenuProvider({
   links,
   actions,
@@ -74,12 +68,10 @@ export function CommandMenuProvider({
   links: NavLink[];
   actions: CommandAction[];
   search?: (text: string) => Promise<CommandSearchResult[]>;
-  /** Read by screen readers when the palette opens: what can be searched. */
   description?: string;
   children: React.ReactNode;
 }) {
   const [open, setOpen] = useState(false);
-  // Latched on first open (a render-time update, the React way to derive state), so the palette is fetched only when asked for.
   const [mounted, setMounted] = useState(false);
   if (open && !mounted) {
     setMounted(true);
@@ -90,8 +82,6 @@ export function CommandMenuProvider({
   const router = useRouter();
   const pages = useMemo(() => flatten(links), [links]);
 
-  // Fetched after first paint, so the first ⌘K opens at once and keys typed straight after it reach the input.
-  // Mounted (closed) as soon as it has loaded, like the always-mounted dialog before 1.0.7.
   useEffect(() => whenIdle(() => void loadPalette().then(() => setMounted(true))), []);
 
   useEffect(() => {

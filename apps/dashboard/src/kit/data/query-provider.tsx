@@ -1,7 +1,6 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useState } from "react";
 
-/** One TanStack Query client per browser tab. */
 export function QueryProvider({ children }: { children: React.ReactNode }) {
   const [client] = useState(
     () =>
