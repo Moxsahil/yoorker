@@ -21,10 +21,6 @@ export function BreadcrumbLabelProvider({ children }: { children: React.ReactNod
   return <LabelContext.Provider value={{ label, setLabel }}>{children}</LabelContext.Provider>;
 }
 
-/**
- * Detail pages name the last crumb themselves, e.g. "#1042" instead of the
- * raw id in the address.
- */
 export function useBreadcrumbLabel(label: string | null) {
   const context = useContext(LabelContext);
   useEffect(() => {

@@ -2,7 +2,6 @@ import { fileURLToPath } from "node:url";
 import { migrate } from "./migrate";
 
 try {
-  // Local dev: read the repo-root .env. Variables already set (CI, staging) win.
   process.loadEnvFile(fileURLToPath(new URL("../../../.env", import.meta.url)));
 } catch {
   // No .env file; use the real environment.

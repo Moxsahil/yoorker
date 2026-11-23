@@ -1,6 +1,5 @@
 import { createHash, createHmac, randomBytes, randomInt, timingSafeEqual } from "node:crypto";
 
-/** 32 random bytes, base64url: 43 characters. */
 export function newSessionToken(): string {
   return randomBytes(32).toString("base64url");
 }
@@ -11,7 +10,6 @@ export function hashSessionToken(token: string): string {
   return createHash("sha256").update(token).digest("hex");
 }
 
-/** A uniformly random 6-digit code, leading zeros kept. */
 export function newOtpCode(): string {
   return randomInt(0, 1_000_000).toString().padStart(6, "0");
 }

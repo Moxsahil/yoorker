@@ -70,17 +70,11 @@ const STATUS: Record<TxStatus, { label: string; tone: Tone }> = {
   PENDING: { label: "Not paid", tone: "warning" },
 };
 
-/** Transactions shown at first, and added by each "Show more". */
 const PAGE = 10;
 
 const pct = `${Math.round(COMMISSION_RATE * 100)}%`;
 
-/** −₹1,200 for money going out. */
 const signed = (paise: number) => (paise < 0 ? `−${inr(-paise)}` : inr(paise));
-
-// ---------------------------------------------------------------------------
-// Summary
-// ---------------------------------------------------------------------------
 
 function Line({
   label,
@@ -213,10 +207,6 @@ function SummaryCard({
   );
 }
 
-// ---------------------------------------------------------------------------
-// Transactions and payouts
-// ---------------------------------------------------------------------------
-
 function TransactionsCard({ list, today }: { list: Transaction[]; today: string }) {
   const [shown, setShown] = useState(PAGE);
   return (
@@ -343,10 +333,6 @@ function PayoutsCard({ list }: { list: ReturnType<typeof payouts> }) {
   );
 }
 
-// ---------------------------------------------------------------------------
-// Report download
-// ---------------------------------------------------------------------------
-
 const slug = (text: string) =>
   text
     .toLowerCase()
@@ -467,10 +453,6 @@ async function downloadReportPdf(
   });
   doc.save(reportName(venue, range, "pdf"));
 }
-
-// ---------------------------------------------------------------------------
-// Page
-// ---------------------------------------------------------------------------
 
 export function EarningsPage() {
   const { courts, venue, loading } = useCurrentVenue();

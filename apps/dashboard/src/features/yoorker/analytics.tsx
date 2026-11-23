@@ -28,7 +28,6 @@ const played = (all: DemoBooking[], range: DateRange, today: string) =>
       b.date >= range.from && b.date <= range.to && b.date <= today && b.booking !== "CANCELLED",
   );
 
-/** Share of this period's players who had played here before it started. */
 function repeatRate(all: DemoBooking[], range: DateRange, today: string) {
   const first = new Map<string, string>();
   for (const b of all) {
@@ -85,7 +84,6 @@ export function AnalyticsPage() {
       queryFn: () => api<CourtSchedule>(`/courts/${court.id}/schedule`),
     })),
   });
-  // Open minutes per weekday across all courts, from the real schedules.
   const openByWeekday = useMemo(() => {
     const minutes = Array(8).fill(0) as number[];
     for (const query of schedules)
@@ -113,7 +111,6 @@ export function AnalyticsPage() {
   const cancelBefore = cancelRate(all, previous, today);
   const list = played(all, range, today);
 
-  // Bookings starting in each weekday and hour.
   const heat = WEEKDAY_SHORT.map((_, d) =>
     Array.from(
       { length: HOURS },

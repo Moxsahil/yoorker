@@ -1,7 +1,6 @@
 import { BRAND } from "@/config/brand";
 import { cn } from "@/lib/utils";
 
-/** The mark and the name, set in the UI font, from config/brand.ts. */
 export function BrandLogo({
   className,
   markClassName,

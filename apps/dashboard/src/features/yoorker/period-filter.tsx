@@ -25,7 +25,6 @@ const toDate = (iso: string) =>
 const toIso = (d: Date) =>
   `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 
-/** The period in the address (?period=7d, or ?period=custom&from=…&to=…), so a view can be shared. */
 export function usePeriod(today: string) {
   const [query, setQuery] = useQueryStates({
     period: parseAsStringLiteral(PERIODS).withDefault("7d"),
@@ -95,7 +94,6 @@ function CustomRange({
         />
         <div className="flex items-center justify-between gap-3 border-t px-3 py-2 text-xs text-muted-foreground">
           <span>Pick a start and an end date, up to {MAX_CUSTOM_DAYS} days.</span>
-          {/* One tap on a date, then this, to see a single day. */}
           {draft?.from && (
             <Button
               size="xs"

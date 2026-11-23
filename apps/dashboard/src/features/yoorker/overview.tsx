@@ -129,7 +129,6 @@ export function OverviewPage() {
     })),
   });
 
-  // Open minutes per court and weekday, from the real schedules.
   const openByCourt = useMemo(
     () =>
       schedules.map((query) => {
@@ -157,7 +156,6 @@ export function OverviewPage() {
     return datesSoFar.reduce((sum, d) => sum + (minutes?.[weekdayOf(d)] ?? 17 * 60), 0);
   };
 
-  // Sample bookings; demoBookings caches per day and court list.
   const all = demoBookings(
     today,
     courts.map((c) => c.name),
@@ -218,7 +216,6 @@ export function OverviewPage() {
     return issues;
   });
 
-  // Upcoming: confirmed bookings from now on (local time at the venue).
   const clock = new Intl.DateTimeFormat("en-GB", {
     timeZone: venue.timezone,
     hour: "2-digit",

@@ -7,7 +7,6 @@ import { R2PhotoStorage } from "./r2-photo-storage";
 //   cd services/api && R2_LIVE_TEST=1 pnpm vitest run src/photos/r2.live.test.ts
 const live = process.env.R2_LIVE_TEST === "1";
 
-// The smallest valid PNG: one transparent pixel.
 const PNG = Buffer.from(
   "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=",
   "base64",
@@ -25,7 +24,6 @@ describe.runIf(live)("R2 bucket (live)", () => {
     const storage = new R2PhotoStorage(r2);
     const key = `live-test/${randomUUID()}.png`;
 
-    // A file of another size than the one signed is refused.
     const wrongSize = await storage.presignUpload(key, "image/png", PNG.length + 1);
     const refused = await fetch(wrongSize.url, {
       method: "PUT",

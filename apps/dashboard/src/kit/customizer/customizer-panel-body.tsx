@@ -48,7 +48,6 @@ const RADIUS_OPTIONS = [
   { value: "0.875rem", label: "LG" },
 ];
 
-/** A preset's own radius, snapped to the nearest option the panel offers. */
 function nearestRadius(radius: string): string {
   const rem = radius.endsWith("px") ? parseFloat(radius) / 16 : parseFloat(radius);
   return RADIUS_OPTIONS.reduce((best, option) =>
@@ -58,7 +57,6 @@ function nearestRadius(radius: string): string {
   ).value;
 }
 
-/** A theme's primary, secondary, accent and muted side by side. */
 function Swatches({ colors }: { colors: readonly string[] }) {
   return (
     <span
@@ -66,7 +64,6 @@ function Swatches({ colors }: { colors: readonly string[] }) {
       aria-hidden
     >
       {colors.map((color, index) => (
-        // The preset's own colours: data, not styling.
         <span key={index} className="h-full flex-1" style={{ backgroundColor: color }} />
       ))}
     </span>
@@ -179,7 +176,6 @@ export function ImportDialog({
   );
 }
 
-/** The panel's controls, loaded by `CustomizerPanel` the first time it opens. */
 export default function CustomizerPanelBody({ onImport }: { onImport: () => void }) {
   const settings = useCustomizer((state) => state);
   const { presets, fonts } = useKitTheme();
@@ -231,7 +227,6 @@ export default function CustomizerPanelBody({ onImport }: { onImport: () => void
               value={presetValue}
               onValueChange={(value) => {
                 if (value && value !== "custom") {
-                  // A theme comes with the radius it was designed for; the Radius control can still change it.
                   crossFade(() =>
                     set({
                       preset: value as string,
@@ -260,7 +255,6 @@ export default function CustomizerPanelBody({ onImport }: { onImport: () => void
                 <SelectGroup>
                   {presets.map((preset) => (
                     <SelectItem key={preset.id} value={preset.id}>
-                      {/* The same row as the trigger's: the open list lays the selected item over it, so any difference shows as a jump. */}
                       <span className="flex items-center gap-2">
                         <Swatches colors={preset.swatches} />
                         {preset.name}

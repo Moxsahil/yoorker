@@ -32,7 +32,6 @@ const envSchema = z
       .default("info"),
     OTP_HASH_SECRET: z.string().min(32, "OTP_HASH_SECRET must be at least 32 characters"),
     TRUST_PROXY_HOPS: z.coerce.number().int().min(0).max(3).default(0),
-    /** OAuth client IDs whose Google ID tokens we accept, comma-separated (web now, apps later). */
     GOOGLE_CLIENT_IDS: z
       .string()
       .default("")
@@ -42,10 +41,6 @@ const envSchema = z
           .map((id) => id.trim())
           .filter((id) => id.length > 0),
       ),
-    /**
-     * Browser origins allowed to call the API with the session cookie, comma-separated,
-     * e.g. https://staging-app.yoorker.com. Empty means no cross-origin access.
-     */
     CORS_ORIGINS: z
       .string()
       .default("")
@@ -62,11 +57,8 @@ const envSchema = z
           }),
         ),
       ),
-    /** Set by Render to the deployed commit; reported by /health so deploys can be confirmed. */
     RENDER_GIT_COMMIT: z.string().optional(),
-    /** Sentry project DSN. Unset or blank turns error reporting off (local runs, tests). */
     SENTRY_DSN: optional(z.url()),
-    /** Sentry environment name, e.g. staging. Defaults to NODE_ENV. */
     SENTRY_ENVIRONMENT: z
       .string()
       .regex(/^[a-z0-9-]{1,32}$/, "SENTRY_ENVIRONMENT must be lowercase letters, digits or -")
@@ -82,13 +74,11 @@ const envSchema = z
         .string()
         .regex(/^[a-z0-9][a-z0-9-]{1,61}[a-z0-9]$/, "R2_PUBLIC_BUCKET must be a bucket name"),
     ),
-    /** Where the public bucket is served, e.g. https://staging-photos.yoorker.com. */
     R2_PUBLIC_URL: optional(
       z.string().refine(isOrigin, {
         message: "R2_PUBLIC_URL must be scheme://host[:port] with no path or trailing slash",
       }),
     ),
-    /** Phone OTP sign-in. Off in production by default: the log sender only prints codes (ADR-0007). */
     PHONE_OTP_ENABLED: z.enum(["true", "false"]).optional(),
   })
   .superRefine((env, ctx) => {
@@ -120,7 +110,6 @@ const envSchema = z
         PHONE_OTP_ENABLED === undefined
           ? env.NODE_ENV !== "production"
           : PHONE_OTP_ENABLED === "true",
-      /** Null when photo uploads are turned off. */
       R2:
         R2_ACCOUNT_ID &&
         R2_ACCESS_KEY_ID &&

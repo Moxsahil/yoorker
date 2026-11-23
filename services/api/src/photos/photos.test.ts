@@ -36,7 +36,6 @@ async function createVenue(slug: string): Promise<string> {
   return venueSchema.parse(res.body).id;
 }
 
-/** Steps 1 and 2 as the dashboard does them; returns the added photo. */
 async function uploadPhoto(forVenue = venueId) {
   const asked = await t
     .http()
@@ -100,7 +99,6 @@ describe("venue photos (TURF-103)", () => {
     expect(second.position).toBe(1);
     expect(first.url).toMatch(/^https:\/\/photos\.example\.com\/venues\//);
 
-    // Staff can see photos.
     const res = await t
       .http()
       .get(`/venues/${venueId}/photos`)

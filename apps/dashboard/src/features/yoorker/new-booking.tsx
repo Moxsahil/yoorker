@@ -32,14 +32,8 @@ import {
 
 const minutesOf = (time: string) => Number(time.slice(0, 2)) * 60 + Number(time.slice(3, 5));
 
-/** 10 digits starting 6-9, the shape of an Indian mobile number. */
 const validPhone = (digits: string) => /^[6-9]\d{9}$/.test(digits);
 
-/**
- * Add a booking by hand, for someone standing at the counter. Lengths, free start times and
- * prices come from the real API (schedule, slots, pricing); the booking itself is kept in this
- * browser until the bookings API arrives in Sprint 3.
- */
 export function NewBookingDialog({
   open,
   onOpenChange,
@@ -49,7 +43,6 @@ export function NewBookingDialog({
   open: boolean;
   onOpenChange: (open: boolean) => void;
   courts: Court[];
-  /** Bookings already on the sheet, so a start time that clashes with one is not offered. */
   existing: DemoBooking[];
 }) {
   const active = courts.filter((c) => c.isActive);

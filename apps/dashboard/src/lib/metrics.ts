@@ -19,13 +19,9 @@ export interface PeriodMetrics {
   newCustomers: number;
   walkIns: number;
   byCourt: Record<string, number>;
-  /** Paid revenue per court. */
   byCourtRevenue: Record<string, number>;
-  /** Booked minutes per court. */
   byCourtMinutes: Record<string, number>;
-  /** Different people who played in the period. */
   customers: number;
-  /** Bookings starting in each hour, 06:00 to 23:00. */
   byHour: number[];
   earningsSeries: Bucket[];
   bookingsSeries: Bucket[];
@@ -42,7 +38,6 @@ const dateFmt = (date: string, opts: Intl.DateTimeFormatOptions) =>
     timeZone: "UTC",
   });
 
-/** Buckets for a range: hours for one day, days up to a month, weeks beyond. */
 function bucketsFor(
   range: DateRange,
 ): { label: string; title: string; dates: string[]; hour?: number }[] {
@@ -71,8 +66,6 @@ function bucketsFor(
       dates: [date],
     }));
   }
-  // Whole weeks counted back from the last day, so the latest bar is a full week; only the
-  // first one may be short.
   const weeks: { label: string; title: string; dates: string[] }[] = [];
   for (let end = dates.length; end > 0; end -= 7) {
     const chunk = dates.slice(Math.max(0, end - 7), end);
@@ -87,10 +80,6 @@ function bucketsFor(
 
 const startHour = (b: DemoBooking) => Number(b.start.slice(0, 2));
 
-/**
- * Everything the Overview shows for one period. `openMinutes(date)` is how long all courts are
- * open that day (from the real schedules), so occupancy = booked time / open time.
- */
 export function periodMetrics(
   all: DemoBooking[],
   range: DateRange,
@@ -102,7 +91,6 @@ export function periodMetrics(
   const paid = inRange.filter((b) => b.payment === "PAID");
   const sum = (list: DemoBooking[]) => list.reduce((s, b) => s + b.pricePaise, 0);
 
-  // A customer is new in the period if their first ever booking falls inside it.
   const first = new Map<string, string>();
   for (const b of all) {
     if (b.booking === "CANCELLED" || b.date > today) continue;
@@ -181,7 +169,6 @@ export function periodMetrics(
   };
 }
 
-/** Ratio change, or null when there's nothing to compare with. */
 export function delta(now: number, before: number): number | null {
   if (!before) return null;
   return (now - before) / before;

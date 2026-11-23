@@ -9,7 +9,6 @@ import { YoorkerMark } from "./logo";
  * it, the mark keeps waiting, so a fast load never flashes anything.
  */
 export function BootSplash() {
-  // Read once, on mount: has the index.html splash already faded the mark in?
   const [shown] = useState(() => performance.now() > 640);
   return (
     <div className={shown ? "boot now" : "boot"} role="status" aria-label="Loading Yoorker">

@@ -31,17 +31,12 @@ import {
   dayLabel,
   inr,
   lengthLabel,
+  QUARTER_HOURS,
   WEEKDAY_SHORT,
   type CourtDuration,
   type CourtPrices,
   type PriceRule,
 } from "@/lib/yoorker";
-
-/** Every quarter hour, the steps the API accepts. */
-const TIMES = Array.from({ length: 96 }, (_, i) => {
-  const m = i * 15;
-  return `${String(Math.floor(m / 60)).padStart(2, "0")}:${String(m % 60).padStart(2, "0")}`;
-});
 
 const DAY_PRESETS: { label: string; days: number[] }[] = [
   { label: "Every day", days: [1, 2, 3, 4, 5, 6, 7] },
@@ -57,7 +52,6 @@ function daysLabel(weekdays: number[], onDate: string | null): string {
 
 const errorText = (error: unknown) => (error instanceof ApiError ? error.message : String(error));
 
-/** Rupees typed by the owner → paise for the API; whole rupees only. */
 const toPaise = (rupees: string) => {
   const n = Number(rupees.replace(/[,\s₹]/g, ""));
   return Number.isInteger(n) && n >= 0 ? n * 100 : null;
@@ -112,7 +106,6 @@ function RupeeField({
   );
 }
 
-/** Add or change one price rule. */
 function RuleDialog({
   rule,
   durations,
@@ -277,7 +270,7 @@ function RuleDialog({
                 value={from}
                 onChange={(e) => setFrom(e.target.value)}
               >
-                {TIMES.map((t) => (
+                {QUARTER_HOURS.map((t) => (
                   <NativeSelectOption key={t} value={t}>
                     {t}
                   </NativeSelectOption>
@@ -292,7 +285,7 @@ function RuleDialog({
                 value={to}
                 onChange={(e) => setTo(e.target.value)}
               >
-                {TIMES.map((t) => (
+                {QUARTER_HOURS.map((t) => (
                   <NativeSelectOption key={t} value={t}>
                     {t}
                   </NativeSelectOption>
@@ -408,10 +401,6 @@ function RuleDialog({
   );
 }
 
-/**
- * The court's prices, editable by owners and managers. Every change sends the whole list to
- * PUT /courts/:id/prices, which checks it and replaces the old one.
- */
 export function PricesCard({
   courtId,
   prices,

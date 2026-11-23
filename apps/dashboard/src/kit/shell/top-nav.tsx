@@ -12,7 +12,6 @@ import { Link, usePathname } from "../framework";
 import { activeHref } from "./nav-active";
 import type { NavGroup } from "./types";
 
-/** The horizontal alternative to the sidebar, driven by the same nav config. */
 export function TopNav({ groups }: { groups: NavGroup[] }) {
   const pathname = usePathname();
   const links = groups.flatMap((group) => group.items);

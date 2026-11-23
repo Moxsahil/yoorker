@@ -1,4 +1,3 @@
-/** Download rows as a CSV file. Values are quoted so commas and quotes survive. */
 export function downloadCsv(
   filename: string,
   header: string[],

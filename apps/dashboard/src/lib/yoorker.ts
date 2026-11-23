@@ -1,5 +1,3 @@
-/** Shapes returned by the Yoorker API (packages/contracts in the main repo). */
-
 export type Role = "OWNER" | "MANAGER" | "STAFF";
 export type Sport = "FOOTBALL" | "CRICKET" | "BADMINTON" | "PICKLEBALL" | "TENNIS" | "BASKETBALL";
 export type Surface =
@@ -146,12 +144,10 @@ export const REASON_LABEL: Record<BlockReason, string> = {
 
 export const WEEKDAY_SHORT = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
-/** ₹1,56,497: whole rupees with Indian grouping. */
 export function inr(paise: number): string {
   return `₹${Math.round(paise / 100).toLocaleString("en-IN")}`;
 }
 
-/** ₹1.6L, ₹42K: for chart labels. */
 export function inrCompact(paise: number): string {
   const rupees = paise / 100;
   if (rupees >= 100000) return `₹${(rupees / 100000).toFixed(rupees >= 1000000 ? 0 : 1)}L`;
@@ -159,14 +155,17 @@ export function inrCompact(paise: number): string {
   return `₹${Math.round(rupees)}`;
 }
 
-/** 210 → "3 h 30 m" */
+export const QUARTER_HOURS = Array.from({ length: 96 }, (_, i) => {
+  const m = i * 15;
+  return `${String(Math.floor(m / 60)).padStart(2, "0")}:${String(m % 60).padStart(2, "0")}`;
+});
+
 export function lengthLabel(minutes: number): string {
   const h = Math.floor(minutes / 60);
   const m = minutes % 60;
   return [h ? `${h} h` : "", m ? `${m} m` : ""].filter(Boolean).join(" ");
 }
 
-/** Today's date at the venue (IST for every Indian venue), "YYYY-MM-DD". */
 export function todayAt(timeZone = "Asia/Kolkata", offsetDays = 0): string {
   const now = new Date(Date.now() + offsetDays * 86400000);
   return new Intl.DateTimeFormat("en-CA", {
@@ -177,7 +176,6 @@ export function todayAt(timeZone = "Asia/Kolkata", offsetDays = 0): string {
   }).format(now);
 }
 
-/** "2026-11-19" → "Thu 19 Nov" */
 export function dayLabel(date: string): string {
   return new Date(`${date}T12:00:00Z`).toLocaleDateString("en-IN", {
     weekday: "short",

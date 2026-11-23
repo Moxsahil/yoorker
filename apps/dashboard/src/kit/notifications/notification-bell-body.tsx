@@ -36,7 +36,6 @@ function sameDay(a: Date, b: Date) {
   );
 }
 
-/** Splits notifications into "Today" and "Earlier", dropping empty groups. */
 function groups(items: BellNotification[]) {
   const now = new Date();
   const today = items.filter((item) => sameDay(new Date(item.at), now));
@@ -72,7 +71,6 @@ function Row({ item, onOpen }: { item: BellNotification; onOpen: () => void }) {
           )}
         >
           <span className="line-clamp-1">{item.title}</span>
-          {/* The unread dot fades out when the item is read. */}
           <span
             className={cn(
               "size-2 shrink-0 rounded-full bg-primary transition-opacity duration-250",
@@ -112,7 +110,6 @@ function List({
     );
   }
   return (
-    // A fixed-height viewport: switching between All and Unread never resizes the popover.
     <ScrollArea className="h-full">
       <div className="flex flex-col gap-2 p-2">
         {groups(items).map((group) => (
@@ -143,7 +140,6 @@ export interface NotificationBellBodyProps {
   emptyDescription: string;
 }
 
-/** The bell's popover contents, loaded by `NotificationBell` the first time it opens. */
 export default function NotificationBellBody({
   recent,
   unread,

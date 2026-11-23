@@ -1,9 +1,5 @@
 import { cn } from "@/lib/utils";
 
-/**
- * The top of every page: title, one line of context, and actions. Keeping it
- * the same everywhere is what makes forty screens feel like one product.
- */
 export function PageHeader({
   title,
   description,
@@ -13,9 +9,7 @@ export function PageHeader({
 }: {
   title: React.ReactNode;
   description?: React.ReactNode;
-  /** Buttons on the right. Put the primary action last. */
   actions?: React.ReactNode;
-  /** Badges or status next to the title. */
   meta?: React.ReactNode;
   className?: string;
 }) {

@@ -19,7 +19,6 @@ import { AuthHeader } from "./auth-shell";
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 const GOOGLE_SCRIPT = "https://accounts.google.com/gsi/client";
 
-/** Loads Google Identity Services once, however many times the form mounts. */
 function loadGoogle(): Promise<void> {
   if (window.google) return Promise.resolve();
   return new Promise((resolve, reject) => {
@@ -50,7 +49,6 @@ declare global {
   }
 }
 
-/** Google's "G" mark, in its brand colours. */
 function GoogleMark() {
   return (
     <svg viewBox="0 0 48 48" aria-hidden className="size-4">
@@ -74,11 +72,6 @@ function GoogleMark() {
   );
 }
 
-/**
- * Yoorker sign-in against the real API: Google (when VITE_GOOGLE_CLIENT_ID is set and
- * this origin is allowed on the OAuth client), and phone OTP, which the local API allows in
- * development and prints the code to its own log.
- */
 export function YoorkerSignIn() {
   const router = useRouter();
   const client = useQueryClient();

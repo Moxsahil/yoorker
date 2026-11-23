@@ -8,7 +8,6 @@ function subscribe(onChange: () => void) {
   return () => media.removeEventListener("change", onChange);
 }
 
-/** True below the 768px breakpoint, kept in step as the window resizes. */
 export function useIsMobile() {
   return useSyncExternalStore(subscribe, () => window.matchMedia(QUERY).matches);
 }

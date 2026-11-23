@@ -24,7 +24,6 @@ export class ScheduleService {
     return this.load(this.db, court);
   }
 
-  /** Replaces the court's start step, booking lengths and opening hours in one go. */
   async updateSchedule(
     actor: Actor,
     courtId: string,

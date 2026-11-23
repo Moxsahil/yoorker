@@ -38,7 +38,6 @@ function isPhotoType(type: string | undefined): type is PhotoContentType {
   return (PHOTO_CONTENT_TYPES as readonly (string | undefined)[]).includes(type);
 }
 
-/** Keys are made by createUpload: venues/<venue id>/<random uuid>.<ext>. */
 function belongsTo(objectKey: string, venueId: string): boolean {
   return new RegExp(`^venues/${venueId}/[0-9a-f-]{36}\\.(jpg|png|webp)$`).test(objectKey);
 }
@@ -76,7 +75,6 @@ export class PhotosService {
     return rows.map((row) => this.toPhoto(row));
   }
 
-  /** Step 1: a short-lived link the browser uploads the file to, straight to R2. */
   async createUpload(
     actor: Actor,
     venueId: string,
@@ -96,7 +94,6 @@ export class PhotosService {
     };
   }
 
-  /** Step 2: once the file is in R2, add it to the venue as the last photo. */
   async addPhoto(actor: Actor, venueId: string, { objectKey }: AddVenuePhoto): Promise<VenuePhoto> {
     const venue = await this.venues.getVenue(actor, venueId, MANAGERS);
     if (!belongsTo(objectKey, venueId)) {

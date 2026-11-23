@@ -49,14 +49,12 @@ const minutesOf = (time: string) => Number(time.slice(0, 2)) * 60 + Number(time.
 const clockOf = (minutes: number) =>
   `${String(Math.floor(minutes / 60) % 24).padStart(2, "0")}:${String(minutes % 60).padStart(2, "0")}`;
 
-/** "1 h 40 m" from minutes. */
 const span = (minutes: number) => {
   const h = Math.floor(minutes / 60);
   const m = minutes % 60;
   return h && m ? `${h} h ${m} m` : h ? `${h} h` : `${m} m`;
 };
 
-/** A cell's start as minutes since the day began, past midnight counted on (24:30 = 1470). */
 const cellStart = (cell: GridCell, previous: number) => {
   let m = minutesOf(cell.start);
   while (m < previous) m += 1440;
@@ -66,18 +64,14 @@ const cellStart = (cell: GridCell, previous: number) => {
 interface CourtNow {
   state: State;
   playing?: DemoBooking;
-  /** When the current state ends, in minutes since midnight. */
   until?: number;
   reason?: string;
-  /** First free start after now. */
   nextFree?: number;
   upNext: DemoBooking[];
-  /** Each cell's start and what it shows on the timeline. */
   cells: { start: number; end: number; kind: "free" | "booked" | "blocked" }[];
 }
 
 function courtNow(cells: GridCell[], bookings: DemoBooking[], now: number): CourtNow {
-  // Times for each cell, in order, so a day running past midnight stays in order.
   const step =
     cells.length > 1
       ? (Date.parse(cells[1]!.startsAt) - Date.parse(cells[0]!.startsAt)) / 60000
@@ -136,13 +130,11 @@ function courtNow(cells: GridCell[], bookings: DemoBooking[], now: number): Cour
       until: minutesOf(playing.start) + playing.minutes,
     };
   }
-  // Free until the next booking, block or closing time.
   let end = index;
   while (strip[end + 1]?.kind === "free") end++;
   return { ...base, state: "FREE", until: strip[end]!.end };
 }
 
-/** Today's opening hours as one bar: free, booked, blocked and gone, with a line at now. */
 function Timeline({ data, now }: { data: CourtNow; now: number }) {
   const { cells } = data;
   if (cells.length === 0)
@@ -210,7 +202,6 @@ function CourtCard({
         <StatusBadge tone={meta.tone}>{meta.label}</StatusBadge>
       </div>
 
-      {/* Now */}
       <div className="mx-(--card-spacing) flex min-h-36 flex-col gap-3 rounded-xl bg-muted/50 p-4">
         <span className="flex items-center gap-1.5 text-xs font-medium tracking-wide text-muted-foreground uppercase">
           <Icon className="size-3.5" />
@@ -308,7 +299,6 @@ function CourtCard({
         )}
       </div>
 
-      {/* Up next */}
       <div className="flex flex-1 flex-col gap-2 px-(--card-spacing)">
         <span className="flex items-center justify-between text-xs font-medium tracking-wide text-muted-foreground uppercase">
           Up next
@@ -354,7 +344,6 @@ function CourtCard({
   );
 }
 
-/** What each court is doing right now. The grid is live; who is playing is sample data until Sprint 3. */
 export function LivePage() {
   const { venue, courts, loading } = useCurrentVenue();
   const [now, setNow] = useState(() => Date.now());

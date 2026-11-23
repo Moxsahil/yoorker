@@ -15,15 +15,10 @@ import { BOOKING, PAYMENT } from "./booking-labels";
 
 type Mode = "week" | "day";
 
-/** The grid runs from 06:00 to 01:00, so a 21:00 cricket slot fits in full. */
 const START_HOUR = 6;
 const END_HOUR = 25;
 const HOURS = Array.from({ length: END_HOUR - START_HOUR }, (_, i) => START_HOUR + i);
 
-/**
- * Fills are mixed with the card colour rather than see-through, so the hour lines and the
- * "now" line never show through a booking's text.
- */
 const BLOCK: Record<BookingLabel, string> = {
   CONFIRMED:
     "border-primary/45 bg-[color-mix(in_oklch,var(--color-primary)_15%,var(--color-card))] hover:bg-[color-mix(in_oklch,var(--color-primary)_25%,var(--color-card))]",
@@ -46,7 +41,6 @@ const hourLabel = (hour: number) => {
   return `${h % 12 || 12} ${h < 12 ? "AM" : "PM"}`;
 };
 
-/** "Turf 1" → "T1", "Cricket ground" → "CG": fits above a narrow lane. */
 const shortName = (court: string) =>
   court
     .split(/\s+/)
@@ -181,7 +175,6 @@ function BookingBlock({
   );
 }
 
-/** Week or day timeline of bookings. In a week each day splits into one lane per court. */
 export function BookingsCalendar({
   bookings,
   courts,
@@ -196,7 +189,6 @@ export function BookingsCalendar({
   const now = useIstMinutes();
   const scroller = useRef<HTMLDivElement>(null);
 
-  // Open on the afternoon, where most bookings are, not on 06:00.
   useEffect(() => {
     if (scroller.current) scroller.current.scrollTop = 9 * (mode === "week" ? 48 : 64);
   }, [mode]);
@@ -218,7 +210,6 @@ export function BookingsCalendar({
   const count = bookings.filter((b) => days.includes(b.date)).length;
   const nowTop = now >= START_HOUR * 60 ? ((now - START_HOUR * 60) / 60) * hourPx : null;
 
-  // Day view: one column per court. Week view: one column per day.
   const columns =
     mode === "week"
       ? days.map((date) => ({ key: date, date, court: undefined }))
@@ -302,7 +293,6 @@ export function BookingsCalendar({
               gridTemplateColumns: `3.5rem repeat(${columns.length}, minmax(0, 1fr))`,
             }}
           >
-            {/* Header row, stuck to the top while the hours scroll. */}
             <div className="sticky top-0 left-0 z-30 border-e border-b bg-card" />
             {columns.map((col) => {
               const isToday = col.date === today;
@@ -359,9 +349,7 @@ export function BookingsCalendar({
               );
             })}
 
-            {/* Hour labels. */}
             <div className="sticky left-0 z-10 border-e bg-card">
-              {/* The time now, in the hour column, where no booking can cover it. */}
               {days.includes(today) && nowTop !== null && (
                 <span
                   className="absolute end-1 z-10 -translate-y-1/2 rounded bg-destructive px-1 py-px font-mono text-[10px] text-white tabular-nums"
@@ -377,7 +365,6 @@ export function BookingsCalendar({
                   className="relative border-t border-border/50 first:border-t-0"
                   style={{ height: hourPx }}
                 >
-                  {/* Sits just under its hour line, so the line never runs through the text. */}
                   <span className="absolute top-1 end-2 font-mono text-[10px] text-muted-foreground tabular-nums">
                     {hourLabel(hour)}
                   </span>

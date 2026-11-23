@@ -2,7 +2,6 @@ import * as Sentry from "@sentry/nestjs";
 import type { Env } from "../config/env";
 import { scrubBreadcrumb, scrubEvent } from "./scrub";
 
-/** Starts Sentry when SENTRY_DSN is set. Returns whether it started. */
 export function initSentry(
   env: Pick<Env, "SENTRY_DSN" | "SENTRY_ENVIRONMENT" | "VERSION">,
 ): boolean {

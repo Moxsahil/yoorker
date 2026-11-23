@@ -3,17 +3,6 @@ import { PageHeader } from "@/kit/ui-patterns/page-header";
 import { Widget } from "@/kit/widgets/widget";
 import { cn } from "@/lib/utils";
 
-/**
- * Loading placeholders for each page's content, shaped like the page they stand in for, so
- * the layout doesn't jump when the data lands. The shell (sidebar, top bar) never shows one.
- * The router uses them while a page's code loads, and each page while its venue and courts do.
- */
-
-// ---------------------------------------------------------------------------
-// Building blocks
-// ---------------------------------------------------------------------------
-
-/** The real title and line of context (they don't depend on data), with placeholder actions. */
 function Header({
   title,
   description,
@@ -43,7 +32,6 @@ function Header({
   );
 }
 
-/** The period filter: a row of pills. */
 function Filter() {
   return (
     <div className="flex flex-wrap items-center gap-2">
@@ -54,7 +42,6 @@ function Filter() {
   );
 }
 
-/** Stat tiles, as StatCards draws them. */
 function Stats({ count, className }: { count: number; className?: string }) {
   return (
     <div className={cn("grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-5", className)}>
@@ -72,7 +59,6 @@ function Stats({ count, className }: { count: number; className?: string }) {
   );
 }
 
-/** A widget frame with a title line, and whatever body goes inside. */
 function Card({ className, children }: { className?: string; children?: React.ReactNode }) {
   return (
     <Widget className={className}>
@@ -85,7 +71,6 @@ function Card({ className, children }: { className?: string; children?: React.Re
   );
 }
 
-/** A big number and its caption, then a bar chart. */
 function Chart({ height = "h-56" }: { height?: string }) {
   const bars = [55, 70, 40, 85, 60, 75, 45, 90, 65, 50, 80, 70];
   return (
@@ -105,7 +90,6 @@ function Chart({ height = "h-56" }: { height?: string }) {
   );
 }
 
-/** Rows with a round avatar and two lines, and a value on the right. */
 function List({ rows = 5 }: { rows?: number }) {
   return (
     <div className="flex flex-col divide-y divide-border/60">
@@ -123,7 +107,6 @@ function List({ rows = 5 }: { rows?: number }) {
   );
 }
 
-/** A table: a header row and data rows. */
 function Table({ rows = 8, cols = 5 }: { rows?: number; cols?: number }) {
   return (
     <div className="flex flex-col">
@@ -154,7 +137,6 @@ function Table({ rows = 8, cols = 5 }: { rows?: number; cols?: number }) {
   );
 }
 
-/** A row of tool controls: search on the left, buttons on the right. */
 function Toolbar() {
   return (
     <div className="flex flex-wrap items-center justify-between gap-2">
@@ -167,7 +149,6 @@ function Toolbar() {
   );
 }
 
-/** A time grid: hours down the side, one column per court or day. */
 function Grid({ cols = 4, rows = 10 }: { cols?: number; rows?: number }) {
   return (
     <div className="flex flex-col gap-1.5">
@@ -193,10 +174,6 @@ function Page({ children }: { children: React.ReactNode }) {
     </div>
   );
 }
-
-// ---------------------------------------------------------------------------
-// Pages
-// ---------------------------------------------------------------------------
 
 export function OverviewSkeleton() {
   return (
@@ -546,7 +523,6 @@ export function SettingsSkeleton() {
   );
 }
 
-/** Pages without a shape of their own, such as Add venue: a header and one card. */
 export function GenericSkeleton() {
   return (
     <Page>

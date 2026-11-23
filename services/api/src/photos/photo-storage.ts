@@ -12,10 +12,8 @@ export interface PresignedUpload {
   expiresAt: Date;
 }
 
-/** The public photo bucket (ADR-0005). */
 export interface PhotoStorage {
   presignUpload(key: string, contentType: string, size: number): Promise<PresignedUpload>;
-  /** The stored object's size and type, or null if nothing was uploaded under `key`. */
   head(key: string): Promise<StoredObject | null>;
   delete(key: string): Promise<void>;
   publicUrl(key: string): string;
@@ -23,7 +21,6 @@ export interface PhotoStorage {
 
 export const PHOTO_STORAGE = Symbol("PHOTO_STORAGE");
 
-/** Used when the R2_* variables are not set (local runs without R2). */
 export class DisabledPhotoStorage implements PhotoStorage {
   private fail(): never {
     throw new ServiceUnavailableException("Photo uploads aren't set up on this server");

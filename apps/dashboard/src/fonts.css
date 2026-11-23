@@ -1,9 +1,3 @@
-/*
- * Hanken Grotesk and JetBrains Mono (SIL Open Font License), self-hosted from Google Fonts:
- * latin and latin-ext, which covers English, Indian names and the ₹ sign. Both are variable
- * fonts, one file for every weight. The fallbacks are Arial sized to the same metrics, so text
- * does not shift when the fonts arrive.
- */
 @font-face {
   font-family: "Hanken Grotesk";
   font-style: normal;

@@ -9,7 +9,6 @@ import type { GoogleProfile } from "./google-verifier";
 export class GoogleSignInService {
   constructor(@Inject(DB) private readonly db: Db) {}
 
-  /** Returns the user for a verified Google profile, creating one on first sign-in. */
   async signIn(profile: GoogleProfile): Promise<string> {
     if (!profile.email || !profile.emailVerified) {
       throw new UnauthorizedException("Your Google account's email isn't verified");
@@ -34,7 +33,6 @@ export class GoogleSignInService {
         .executeTakeFirst();
 
       if (known) {
-        // Google's copy of the email is the current one.
         await trx
           .updateTable("app_user")
           .set({ email, email_verified_at: sql<Date>`now()` })
@@ -58,7 +56,6 @@ export class GoogleSignInService {
   }
 }
 
-/** Google display names can be blank or longer than app_user allows. */
 function cleanName(name: string | null): string | null {
   const cleaned = name?.trim().slice(0, 100).trim();
   return cleaned ? cleaned : null;

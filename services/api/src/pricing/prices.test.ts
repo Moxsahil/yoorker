@@ -221,7 +221,6 @@ describe("court prices (TURF-201)", () => {
     expect(res.body.issues).toEqual([
       { path: "rules.0.minutes", message: "2 h isn't a booking length of this court" },
     ]);
-    // Nothing changed.
     expect((await prices().expect(200)).body.rules).toHaveLength(6);
   });
 

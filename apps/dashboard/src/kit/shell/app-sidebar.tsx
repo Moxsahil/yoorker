@@ -49,7 +49,6 @@ export function AppSidebar({
         />
       </SidebarHeader>
       <SidebarContent>
-        {/* A real box, not display: contents (some screen readers drop those): the nav is the links' landmark. */}
         <nav aria-label="Main" className="flex min-h-0 flex-1 flex-col">
           <NavMain groups={config.nav} badges={badges} />
           <SidebarGroup className="mt-auto">

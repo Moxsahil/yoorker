@@ -13,8 +13,6 @@ import {
 
 interface CustomizerState extends CustomizerSettings {
   hydrated: boolean;
-  /** Whether the customizer panel is open. Lives here, not in the panel, so
-   * switching layouts (which remounts the header) does not close it. */
   panelOpen: boolean;
   setPanelOpen: (open: boolean) => void;
   set: (patch: Partial<CustomizerSettings>) => void;
@@ -58,11 +56,6 @@ function createCustomizerStore(defaults: CustomizerSettings) {
   );
 }
 
-/**
- * Holds the customizer settings. Saved settings are applied to the page before
- * first paint by `CustomizerScript`; this provider takes over after hydration
- * and keeps the injected theme CSS and the `dir` attribute in sync.
- */
 export function CustomizerProvider({
   theme,
   children,
@@ -112,7 +105,6 @@ export function useCustomizer<T>(select: (state: CustomizerState) => T): T {
   return useStore(useCustomizerContext().store, select);
 }
 
-/** The template's theme config: its presets, fonts and defaults. */
 export function useKitTheme(): KitTheme {
   return useCustomizerContext().theme;
 }

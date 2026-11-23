@@ -155,7 +155,6 @@ describe("blocks (TURF-203)", () => {
     const blocks = blockSchema.array().parse(res.body);
     expect(blocks.map((b) => b.courtId).sort()).toEqual([turf1, turf2].sort());
     expect(blocks[0]!.startsAt).toBe("2026-12-24T18:30:00.000Z");
-    // A block covering a whole day shows up for that day.
     expect(
       (await list(turf2, "from=2026-12-25&to=2026-12-26").expect(200)).body.map(
         (b: Block) => b.reason,

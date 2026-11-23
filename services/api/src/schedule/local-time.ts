@@ -1,8 +1,5 @@
-/** Converts local wall-clock times to UTC instants for an IANA timezone (Asia/Kolkata). */
-
 const DATE = /^(\d{4})-(\d{2})-(\d{2})$/;
 
-/** Parses "2026-12-19" into its parts, or throws for anything that is not a real date. */
 export function parseDate(date: string): { year: number; month: number; day: number } {
   const match = DATE.exec(date);
   if (match) {
@@ -15,14 +12,12 @@ export function parseDate(date: string): { year: number; month: number; day: num
   throw new RangeError(`Not a date: ${date}`);
 }
 
-/** ISO weekday of a calendar date: 1 = Monday ... 7 = Sunday. */
 export function isoWeekday(date: string): number {
   const { year, month, day } = parseDate(date);
   const weekday = new Date(Date.UTC(year, month - 1, day)).getUTCDay();
   return weekday === 0 ? 7 : weekday;
 }
 
-/** How far the timezone's wall clock is ahead of UTC at `instant`, in milliseconds. */
 function offsetMs(instant: number, timeZone: string): number {
   const parts = new Intl.DateTimeFormat("en-US", {
     timeZone,
@@ -57,7 +52,6 @@ export function localToUtc(date: string, minuteOfDay: number, timeZone: string):
   return new Date(wall - first);
 }
 
-/** The venue's local "YYYY-MM-DDTHH:MM" for a UTC instant. */
 export function utcToLocal(instant: Date, timeZone: string): string {
   const parts = new Intl.DateTimeFormat("en-US", {
     timeZone,
@@ -72,7 +66,6 @@ export function utcToLocal(instant: Date, timeZone: string): string {
   return `${get("year")}-${get("month")}-${get("day")}T${get("hour")}:${get("minute")}`;
 }
 
-/** The UTC instant of a local "YYYY-MM-DDTHH:MM" at the venue. */
 export function localDateTimeToUtc(local: string, timeZone: string): Date {
   const [hours, minutes] = local.slice(11).split(":").map(Number);
   return localToUtc(local.slice(0, 10), hours! * 60 + minutes!, timeZone);

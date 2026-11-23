@@ -50,10 +50,6 @@ const SECTIONS = [
   { id: "help", label: "Help & support", icon: LifeBuoyIcon },
 ] as const;
 
-// ---------------------------------------------------------------------------
-// Shared bits
-// ---------------------------------------------------------------------------
-
 function Field({
   id,
   label,
@@ -80,7 +76,6 @@ function Field({
   );
 }
 
-/** A row with a label and explanation on the left and a control on the right. */
 function SettingRow({
   title,
   detail,
@@ -101,7 +96,6 @@ function SettingRow({
   );
 }
 
-/** Card footer: Save when something changed, otherwise a quiet "Saved". */
 function SaveBar({
   dirty,
   onSave,
@@ -132,7 +126,6 @@ function SaveBar({
   );
 }
 
-/** Local form state with a saved copy, so a card knows when it has unsaved changes. */
 function useDraft<T>(initial: T) {
   const [saved, setSaved] = useState(initial);
   const [draft, setDraft] = useState(initial);
@@ -161,7 +154,6 @@ function Section({
   children: React.ReactNode;
 }) {
   return (
-    // The wrapper carries the id, so the side list can jump and highlight.
     <section id={id} className={cn("scroll-mt-24", className)}>
       <Widget className="h-full">
         <WidgetHeader
@@ -178,10 +170,6 @@ function Section({
     </section>
   );
 }
-
-// ---------------------------------------------------------------------------
-// Business profile
-// ---------------------------------------------------------------------------
 
 function BusinessCard() {
   const { venue, organisations } = useCurrentVenue();
@@ -264,10 +252,6 @@ function BusinessCard() {
   );
 }
 
-// ---------------------------------------------------------------------------
-// Your account (real API)
-// ---------------------------------------------------------------------------
-
 function AccountCard({ user }: { user: Me["user"] }) {
   const client = useQueryClient();
   const form = useDraft({ name: user.name ?? "", phone: user.phone ?? "" });
@@ -327,11 +311,6 @@ function AccountCard({ user }: { user: Me["user"] }) {
   );
 }
 
-// ---------------------------------------------------------------------------
-// Tax & payouts
-// ---------------------------------------------------------------------------
-
-/** 15 characters: state code, PAN, entity number, Z, checksum. */
 const GSTIN = /^\d{2}[A-Z]{5}\d{4}[A-Z][1-9A-Z]Z[0-9A-Z]$/;
 const IFSC = /^[A-Z]{4}0[A-Z0-9]{6}$/;
 
@@ -494,10 +473,6 @@ function PayoutsCard() {
   );
 }
 
-// ---------------------------------------------------------------------------
-// Cancellation & refunds
-// ---------------------------------------------------------------------------
-
 const FREE_WINDOWS = [
   { value: 24, label: "24 hours or more before" },
   { value: 12, label: "12 hours before" },
@@ -556,7 +531,6 @@ function CancellationCard() {
           </Field>
         </div>
 
-        {/* What players read, as a timeline up to the start of the game. */}
         <div className="flex flex-col gap-3 rounded-lg bg-muted/50 p-4">
           <span className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
             Players see
@@ -624,10 +598,6 @@ function CancellationCard() {
     </Section>
   );
 }
-
-// ---------------------------------------------------------------------------
-// Booking preferences
-// ---------------------------------------------------------------------------
 
 function BookingCard() {
   const form = useDraft({ aheadDays: 30, gapMinutes: 0, sendQr: true });
@@ -705,10 +675,6 @@ function BookingCard() {
   );
 }
 
-// ---------------------------------------------------------------------------
-// Security
-// ---------------------------------------------------------------------------
-
 interface Device {
   id: string;
   name: string;
@@ -717,7 +683,6 @@ interface Device {
   current: boolean;
 }
 
-/** "Chrome on Windows" from the browser's user agent. */
 function describe(agent: string) {
   const browser = /Edg\//.test(agent)
     ? "Edge"
@@ -763,7 +728,6 @@ function SecurityCard() {
     },
   ]);
 
-  // The user agent only exists in the browser, so read it after the first paint.
   useEffect(() => {
     const id = requestAnimationFrame(() => setHere(describe(navigator.userAgent)));
     return () => cancelAnimationFrame(id);
@@ -849,10 +813,6 @@ function SecurityCard() {
   );
 }
 
-// ---------------------------------------------------------------------------
-// Notifications
-// ---------------------------------------------------------------------------
-
 const CHANNELS = [
   { id: "whatsapp", label: "WhatsApp", icon: MessageCircleIcon },
   { id: "email", label: "Email", icon: MailIcon },
@@ -898,7 +858,6 @@ const EVENTS: { id: string; label: string; detail: string }[] = [
   },
 ];
 
-/** Sensible defaults: the urgent ones everywhere, the busy ones as push only. */
 const DEFAULT_CHANNELS: Record<string, ChannelId[]> = {
   booking_new: ["whatsapp", "push"],
   booking_cancelled: ["whatsapp", "email", "push"],
@@ -922,7 +881,6 @@ function NotificationsCard() {
         : (draft[event] ?? []).filter((c) => c !== channel),
     );
   const allOn = (channel: ChannelId) => EVENTS.every((e) => has(e.id, channel));
-  // One update for the whole column, so every row changes together.
   const setColumn = (channel: ChannelId, on: boolean) => {
     for (const e of EVENTS) {
       const list = draft[e.id] ?? [];
@@ -1016,10 +974,6 @@ function NotificationsCard() {
   );
 }
 
-// ---------------------------------------------------------------------------
-// Help & support
-// ---------------------------------------------------------------------------
-
 function HelpCard() {
   const options: {
     icon: LucideIcon;
@@ -1098,17 +1052,11 @@ function HelpCard() {
   );
 }
 
-// ---------------------------------------------------------------------------
-// Page
-// ---------------------------------------------------------------------------
-
 export function SettingsPage() {
   const me = useMe();
   const { venue, loading } = useCurrentVenue();
   const [active, setActive] = useState<string>("business");
 
-  // Highlight the section being read: the last one whose top has passed near the top bar.
-  // At the very bottom of the page, the last section wins even if it's short.
   useEffect(() => {
     const update = () => {
       const atEnd =
@@ -1157,9 +1105,7 @@ export function SettingsPage() {
             );
           })}
         </nav>
-        {/* Two cards a row on wide screens; each row shares one height. */}
         <div className="grid gap-6 xl:grid-cols-2">
-          {/* Waits for the venue, so the address is filled in from the start. */}
           {venue && <BusinessCard key={venue.id} />}
           {me.data && <AccountCard key={me.data.user.id} user={me.data.user} />}
           <PayoutsCard />

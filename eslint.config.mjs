@@ -22,7 +22,6 @@ export default tseslint.config(
     rules: { "@typescript-eslint/no-namespace": ["error", { allowDeclarations: true }] },
   },
   {
-    // React's rules of hooks for the dashboard.
     files: ["apps/dashboard/**/*.{ts,tsx}"],
     ...reactHooks.configs.flat.recommended,
   },

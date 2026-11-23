@@ -9,12 +9,10 @@ import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import type { Env } from "../config/env";
 import type { PhotoStorage, PresignedUpload, StoredObject } from "./photo-storage";
 
-/** How long an upload link stays valid. */
 export const UPLOAD_TTL_SECONDS = 600;
 
 type R2Config = NonNullable<Env["R2"]>;
 
-/** Cloudflare R2 through its S3-compatible API. */
 export class R2PhotoStorage implements PhotoStorage {
   private readonly client: S3Client;
 

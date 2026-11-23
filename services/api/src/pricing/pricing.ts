@@ -3,18 +3,14 @@ import { isoWeekday, parseDate } from "../schedule/local-time";
 import { formatClock } from "../schedule/schedule-rules";
 
 const DAY = 1440;
-/** Hourly prices are worked out in 15-minute parts. */
 const PART = 15;
 
-/** A price rule as stored: local minutes; toMinute may pass 1440 (ends the next day). */
 export interface StoredPriceRule {
   name: string;
-  /** ISO weekdays; empty when onDate is set. */
   weekdays: number[];
   onDate: string | null;
   fromMinute: number;
   toMinute: number;
-  /** Only bookings of this length; null means any length. */
   minutes: number | null;
   unit: PriceUnit;
   pricePaise: number;
@@ -23,30 +19,21 @@ export interface StoredPriceRule {
 
 export interface PriceBook {
   basePricePerHourPaise: number | null;
-  /** In display order; earlier wins a tie. */
   rules: StoredPriceRule[];
 }
 
 export interface BookingTime {
-  /** Local calendar date at the venue, "YYYY-MM-DD". */
   date: string;
-  /** Minutes after local midnight on that date. */
   startMinute: number;
   minutes: number;
-  /** The booking length's package price, if the owner set one (TURF-206). */
   packagePricePaise: number | null;
 }
 
-/** "2026-12-31" plus `days` calendar days. */
 export function addDays(date: string, days: number): string {
   const { year, month, day } = parseDate(date);
   return new Date(Date.UTC(year, month - 1, day + days)).toISOString().slice(0, 10);
 }
 
-/**
- * Whether `rule` covers minute `t` counted from midnight at the start of `date` (t may pass
- * 1440). A rule's window can run past midnight, so yesterday's and today's windows both count.
- */
 export function covers(rule: StoredPriceRule, date: string, t: number): boolean {
   for (const k of [-1, 0, 1]) {
     const day = addDays(date, k);
@@ -65,7 +52,6 @@ function outranks(a: StoredPriceRule, b: StoredPriceRule): boolean {
   return a.priority > b.priority;
 }
 
-/** The rule that applies when several match; on a full tie, the one listed first. */
 export function pickRule(
   rules: readonly StoredPriceRule[],
   matches: (rule: StoredPriceRule) => boolean,
@@ -77,7 +63,6 @@ export function pickRule(
   return best;
 }
 
-/** Hourly price in paise before rounding, with the stretches at each rate; null if unpriced. */
 export function hourlyParts(
   book: PriceBook,
   booking: Omit<BookingTime, "packagePricePaise">,

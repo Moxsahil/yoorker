@@ -3,11 +3,6 @@ import { BaseExceptionFilter } from "@nestjs/core";
 import type { Request } from "express";
 import { ERROR_REPORTER, type ErrorContext, type ErrorReporter } from "./error-reporter";
 
-/**
- * Reports unexpected errors, then answers exactly as Nest would (500, generic message).
- * HttpExceptions are deliberate answers (400, 401, 404, 409, the /health 503) and are
- * not reported.
- */
 @Catch()
 export class ReportErrorsFilter extends BaseExceptionFilter {
   constructor(@Inject(ERROR_REPORTER) private readonly reporter: ErrorReporter) {

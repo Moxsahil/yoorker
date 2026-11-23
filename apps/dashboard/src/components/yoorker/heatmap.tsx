@@ -1,11 +1,5 @@
 import { cn } from "@/lib/utils";
 
-/**
- * A weekday-by-hour heatmap: square cells shaded by value in the lead chart
- * colour, no glow, so neighbouring cells never fuse. The cells cap their size
- * and the hour labels thin out with the card's width (container queries), so
- * it reads at 280px and at 900px alike.
- */
 export function Heatmap({
   rows,
   columns,
@@ -16,16 +10,13 @@ export function Heatmap({
 }: {
   rows: readonly string[];
   columns: readonly string[];
-  /** values[row][column] */
   values: readonly (readonly number[])[];
   format?: (value: number) => string;
-  /** What the chart shows, for screen readers, e.g. "Sessions by weekday and hour". */
   label: string;
   className?: string;
 }) {
   const max = Math.max(1, ...values.flat());
   const n = columns.length;
-  // Three tiers of hour labels: always every `wide`th, then every `mid`th from a medium card, then all of them when there is room.
   const wide = Math.max(1, Math.ceil(n / 4));
   const mid = Math.max(1, Math.ceil(n / 8));
   const all = n <= 12 ? 1 : 2;
@@ -40,7 +31,6 @@ export function Heatmap({
       <figcaption className="sr-only">
         {label}. Peak {rows[peak.y]} {columns[peak.x]}, {format(peak.value)}.
       </figcaption>
-      {/* Every value for screen readers; the grid below is drawn for the eye. */}
       <div className="sr-only">
         <table>
           <thead>
@@ -98,7 +88,6 @@ export function Heatmap({
             key={column}
             className={cn(
               "mt-1.5 overflow-visible text-center font-mono text-[10px] whitespace-nowrap text-muted-foreground",
-              // invisible, not hidden: a thinned label keeps its column, so the others stay under their own cells.
               x % wide !== 0 && "invisible",
               x % wide !== 0 && x % mid === 0 && "@sm:visible",
               x % wide !== 0 && x % mid !== 0 && x % all === 0 && "@xl:visible",

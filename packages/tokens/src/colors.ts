@@ -1,9 +1,3 @@
-/**
- * Yoorker color tokens.
- * Palette: green, dark navy, teal and orange, taken from the sprint plan's design.
- */
-
-/** Primary: pitch green, the main brand color (buttons, links, "free" slots). */
 export const primary = {
   50: "#f0fdf4",
   100: "#dcfce7",
@@ -11,13 +5,12 @@ export const primary = {
   300: "#86efac",
   400: "#4ade80",
   500: "#22c55e",
-  600: "#16a34a", // main brand green
+  600: "#16a34a",
   700: "#15803d",
   800: "#166534",
   900: "#14532d",
 } as const;
 
-/** Secondary: night navy (headers, dark backgrounds, text). */
 export const secondary = {
   50: "#f8fafc",
   100: "#f1f5f9",
@@ -28,10 +21,9 @@ export const secondary = {
   600: "#475569",
   700: "#334155",
   800: "#1e293b",
-  900: "#0b1220", // main dark navy
+  900: "#0b1220",
 } as const;
 
-/** Accent: teal, used for highlights and secondary actions. */
 export const accent = {
   100: "#ccfbf1",
   500: "#14b8a6",
@@ -39,7 +31,6 @@ export const accent = {
   700: "#0f766e",
 } as const;
 
-/** Neutral greys for borders, dividers and muted text. */
 export const neutral = {
   0: "#ffffff",
   50: "#f9fafb",
@@ -55,7 +46,6 @@ export const neutral = {
   1000: "#000000",
 } as const;
 
-/** Status colors for success, warnings, errors and info. */
 export const status = {
   success: "#16a34a",
   warning: "#ea8a0c",
@@ -63,7 +53,6 @@ export const status = {
   info: "#2563eb",
 } as const;
 
-/** Slot-grid states (Sprint 2): free, held, booked, blocked. */
 export const slot = {
   free: primary[500],
   held: status.warning,
@@ -71,7 +60,6 @@ export const slot = {
   blocked: neutral[300],
 } as const;
 
-/** Semantic aliases: use these in components instead of raw scale values. */
 export const colors = {
   brand: primary[600],
   brandLight: primary[300],

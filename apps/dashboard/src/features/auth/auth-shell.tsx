@@ -12,10 +12,6 @@ const POINTS = [
 const PANEL = "/auth/panel.svg";
 const DEMO_NOTE = "Local demo: sign in with your mobile. The code is printed in the API terminal.";
 
-/**
- * Yoorker's auth frame: a quiet slate panel beside the form on wide screens,
- * the form alone on small ones. The panel art is one small SVG: a floodlit multi-sport complex.
- */
 export function AuthShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="grid min-h-svh bg-background lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">

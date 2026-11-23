@@ -8,7 +8,6 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { whenIdle } from "../ui-patterns/when-idle";
 import { useCustomizer } from "./customizer-provider";
 
-// The controls (selects, fields, the import dialog) load when the panel first opens: no page needs them to paint.
 const loadBody = () => import("./customizer-panel-body");
 const CustomizerPanelBody = lazy(loadBody);
 const ImportDialog = lazy(() => loadBody().then((module) => ({ default: module.ImportDialog })));
@@ -39,7 +38,6 @@ export function CustomizerPanel() {
           </TooltipTrigger>
           <TooltipContent>Customize</TooltipContent>
         </Tooltip>
-        {/* Its own view-transition layer, kept live (see globals.css), so its controls animate while the page cross-fades. */}
         <PopoverContent
           align="end"
           className="w-[min(20rem,calc(100vw-2rem))] gap-0 overflow-hidden p-0 [view-transition-name:customizer]"

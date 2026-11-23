@@ -8,14 +8,6 @@ import { cn } from "@/lib/utils";
 
 import { crossFade } from "../customizer/cross-fade";
 
-/**
- * Light or dark in one click, for the header. The customizer keeps the
- * three-way choice (with System); this is the quick switch.
- *
- * The icon follows the `.dark` class rather than `resolvedTheme`, so it is
- * right on the first paint: the theme is unknown on the server, and reading it
- * would swap the icon visibly after hydration.
- */
 export function ModeToggle() {
   const { resolvedTheme, setTheme } = useTheme();
   const layer =

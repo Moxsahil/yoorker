@@ -16,10 +16,6 @@ import {
 
 import type { NavGroup, NavLink } from "@/kit/shell/types";
 
-/**
- * Yoorker's 13 sections (Sprint Plan v1.2). One list drives the sidebar, ⌘K and the G shortcuts.
- * Notifications live behind the bell in the top bar.
- */
 export const NAV: NavGroup[] = [
   {
     items: [

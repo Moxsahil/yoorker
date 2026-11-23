@@ -66,7 +66,6 @@ function VenueLogo({ className }: { className?: string }) {
   return <LandPlotIcon className={className} />;
 }
 
-/** Signed out: go to /sign-in. Signed in: the shell. */
 function useSessionGate() {
   const me = useMe();
   const router = useRouter();
@@ -237,7 +236,6 @@ function Commands({ children }: { children: React.ReactNode }) {
 
 export function YoorkerShell({ children }: { children: React.ReactNode }) {
   const me = useSessionGate();
-  // The API answered with an error (not "signed out"): say so instead of loading forever.
   if (me.isError && !me.data) {
     return (
       <div className="flex min-h-svh flex-col items-center justify-center gap-3 p-8 text-center">

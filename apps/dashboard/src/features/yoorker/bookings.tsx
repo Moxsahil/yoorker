@@ -34,7 +34,6 @@ type View = "today" | "upcoming" | "past";
 const LAYOUTS = ["list", "calendar"] as const;
 type Layout = (typeof LAYOUTS)[number];
 
-/** Rows shown at first, and added by each "Show more". */
 const PAGE = 40;
 
 export function BookingsPage() {
@@ -68,15 +67,13 @@ export function BookingsPage() {
     ],
     [courts, today, manual],
   );
-  // ?new=1 opens the form, so the Overview's "New booking" button lands straight in it.
   const [creating, setCreating] = useQueryState("new", parseAsBoolean.withDefault(false));
   const rows = all
     .filter((b) =>
       view === "today"
         ? b.date === today
         : view === "upcoming"
-          ? // Still to be played: later days, or later today. Same list as the Overview.
-            b.booking === "CONFIRMED" && (b.date > today || (b.date === today && b.start >= clock))
+          ? b.booking === "CONFIRMED" && (b.date > today || (b.date === today && b.start >= clock))
           : b.date < today,
     )
     .filter(
@@ -102,7 +99,6 @@ export function BookingsPage() {
         meta={<SampleBadge sprint="Sprint 3" />}
         actions={
           <div className="flex flex-wrap items-center justify-end gap-2">
-            {/* Stays in place in Calendar view, just inactive, so switching layout doesn't move anything. */}
             <div
               inert={layout === "calendar"}
               className={cn("transition-opacity", layout === "calendar" && "opacity-40")}
@@ -168,7 +164,6 @@ export function BookingsPage() {
                   setSearch(e.target.value);
                   setShown(PAGE);
                 }}
-                // The header pulls its action out to the edge; push the field back inside the card.
                 className="me-2 h-8 w-64 max-w-[50vw]"
               />
             }

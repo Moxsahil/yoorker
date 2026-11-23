@@ -59,7 +59,6 @@
 
 :root {
   --radius: 0.625rem;
-  /* The customizer swaps --font-sans for another of THEME.fonts; headings follow it (kit.css --heading-font). */
   --font-sans: var(--font-hanken), ui-sans-serif, system-ui, sans-serif;
   --background: oklch(0.974 0.006 255);
   --foreground: oklch(0.19 0.028 264);
@@ -92,7 +91,6 @@
   --chart-5: oklch(0.88 0.02 255);
   --chart-lead: var(--primary);
   --chart-line: color-mix(in oklch, var(--chart-lead) 60%, var(--foreground));
-  /* Kit surface tokens: a slate canvas and white cards with a hairline lift. */
   --page: var(--background);
   --surface-shadow:
     0 0 0 1px color-mix(in oklch, var(--foreground) 5%, transparent),
@@ -171,7 +169,6 @@
   }
   html {
     @apply font-sans;
-    /* Matches the Kit customizer's default scale (md, 16px), so the server HTML and the hydrated page agree. */
     font-size: 16px;
     /* Keep room for the scrollbar on every page, so a long list appearing doesn't push the
        whole layout sideways. */

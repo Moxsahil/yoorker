@@ -2,13 +2,10 @@ import type { ColumnType, Generated } from "kysely";
 
 /** Set by the database on insert. The app never writes it. */
 type CreatedAt = ColumnType<Date, never, never>;
-/** Kept current by the set_updated_at trigger. */
 type UpdatedAt = ColumnType<Date, never, never>;
-/** Optional on insert, may be null. */
 type Nullable<T> = ColumnType<T | null, T | null | undefined, T | null>;
 /** geography(Point, 4326). Write with point(); read with ST_X/ST_Y or ST_AsGeoJSON. */
 type Geography = string;
-/** jsonb written once (audit log). */
 type JsonSnapshot = ColumnType<unknown, object | null | undefined, never>;
 
 export const MEMBER_ROLES = ["OWNER", "MANAGER", "STAFF"] as const;
@@ -74,7 +71,6 @@ export interface CityTable {
   name: string;
   state: string;
   centroid: Geography;
-  /** Cities we actively launch in. Others exist because an owner listed a venue there. */
   is_live: Generated<boolean>;
   created_at: CreatedAt;
 }
@@ -87,12 +83,10 @@ export interface VenueTable {
   name: string;
   address: string;
   locality: Nullable<string>;
-  /** Indian PIN code, 6 digits. */
   pincode: Nullable<string>;
   location: Geography;
   timezone: Generated<string>;
   amenities: Generated<string[]>;
-  /** Facility rules shown to players, e.g. "No metal studs". */
   rules: Generated<string[]>;
   is_active: Generated<boolean>;
   created_at: CreatedAt;
@@ -115,45 +109,35 @@ export interface CourtTable {
   surface: CourtSurface;
   capacity: number;
   is_active: Generated<boolean>;
-  /** How often a booking can start: 15, 30 or 60 minutes. */
   start_step_minutes: Generated<number>;
-  /** Price per hour when no price rule matches; null means no fallback price. */
   base_price_per_hour_paise: Nullable<number>;
   created_at: CreatedAt;
   updated_at: UpdatedAt;
 }
 
-/** One opening window in local time. No rows for a court means it is closed. */
 export interface OpeningHoursTable {
   id: Generated<string>;
   court_id: string;
-  /** ISO weekday: 1 = Monday ... 7 = Sunday. */
   weekday: number;
-  /** Minutes after local midnight, 0-1439. */
   opens_minute: number;
   /** Up to opens_minute + 1440; above 1440 ends the next day. */
   closes_minute: number;
 }
 
-/** A booking length players can choose on a court. */
 export interface CourtDurationTable {
   id: Generated<string>;
   court_id: string;
   minutes: number;
   label: Nullable<string>;
-  /** Null means every sport on the court. */
   sport: Nullable<Sport>;
-  /** Fixed package price; null means priced per hour. */
   price_paise: Nullable<number>;
   position: Generated<number>;
 }
 
-/** An owner's price for some days, hours and booking lengths of a court (TURF-201). */
 export interface PriceRuleTable {
   id: Generated<string>;
   court_id: string;
   name: string;
-  /** ISO weekdays, 1 = Monday; empty when on_date is set. */
   weekdays: Generated<number[]>;
   /**
    * A single date, e.g. 2026-12-31. Written as "YYYY-MM-DD"; select it with `on_date::text`,
@@ -163,7 +147,6 @@ export interface PriceRuleTable {
   from_minute: number;
   /** Up to from_minute + 1440; above 1440 ends the next day. */
   to_minute: number;
-  /** Only bookings of this length; null means any length. */
   minutes: Nullable<number>;
   unit: PriceUnit;
   price_paise: number;
@@ -171,7 +154,6 @@ export interface PriceRuleTable {
   position: Generated<number>;
 }
 
-/** Time a court can't be booked (TURF-203). */
 export interface BlackoutTable {
   id: Generated<string>;
   court_id: string;

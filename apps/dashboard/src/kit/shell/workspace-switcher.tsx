@@ -31,7 +31,6 @@ export function WorkspaceSwitcher({
 }: {
   workspaces: Workspace[];
   labels?: { group: string; add: string };
-  /** Controlled mode (Yoorker's venue switcher): the chosen id and what to do on a pick. */
   activeId?: string;
   onSelect?: (id: string) => void;
   addHref?: string;

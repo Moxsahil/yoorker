@@ -46,16 +46,11 @@ import { DEV_NOTES } from "@/lib/dev-notes";
 
 import { LiveBadge, SampleBadge } from "./common";
 
-// ---------------------------------------------------------------------------
-// The figures on top
-// ---------------------------------------------------------------------------
-
 export interface Stat {
   label: string;
   value: string;
   icon: LucideIcon;
   delta: number | null;
-  /** A rise is bad (cancellations). */
   invert?: boolean;
   caption: string;
 }
@@ -83,10 +78,6 @@ export function StatCards({ stats }: { stats: Stat[] }) {
     </div>
   );
 }
-
-// ---------------------------------------------------------------------------
-// Revenue overview
-// ---------------------------------------------------------------------------
 
 export function RevenueCard({
   now,
@@ -152,10 +143,6 @@ export function RevenueCard({
     </Widget>
   );
 }
-
-// ---------------------------------------------------------------------------
-// Upcoming bookings
-// ---------------------------------------------------------------------------
 
 export function UpcomingBookings({ bookings, today }: { bookings: DemoBooking[]; today: string }) {
   return (
@@ -225,10 +212,6 @@ export function UpcomingBookings({ bookings, today }: { bookings: DemoBooking[];
   );
 }
 
-// ---------------------------------------------------------------------------
-// Venue performance
-// ---------------------------------------------------------------------------
-
 export function VenuePerformance({
   courts,
   now,
@@ -238,7 +221,6 @@ export function VenuePerformance({
   courts: Court[];
   now: PeriodMetrics;
   before: PeriodMetrics;
-  /** Open minutes of one court over the period. */
   openMinutes: (court: Court) => number;
 }) {
   const rows = courts.map((court) => {
@@ -260,8 +242,6 @@ export function VenuePerformance({
         title={<CardTitle title="Venue performance" badge={<SampleBadge sprint="Sprint 3" />} />}
         icon={Building2Icon}
       />
-      {/* Cells have their own side padding, so the hover fill doesn't touch the text; the
-          wrapper pulls in by the same amount to keep text lined up with the card title. */}
       <div className="overflow-x-auto px-[calc(var(--card-spacing)-0.75rem)]">
         <Table className="[&_td]:px-3 [&_td]:py-3.5 [&_td:first-child]:rounded-s-lg [&_td:last-child]:rounded-e-lg [&_th]:h-9 [&_th]:px-3">
           <TableHeader>
@@ -340,10 +320,6 @@ export function VenuePerformance({
     </Widget>
   );
 }
-
-// ---------------------------------------------------------------------------
-// Recent activity: real changes from the audit log, plus sample booking events
-// ---------------------------------------------------------------------------
 
 interface AuditEntry {
   id: string;
@@ -547,7 +523,6 @@ export function RecentActivity({
   );
 }
 
-/** A card title with its data badge beside it, so the right side stays free for actions. */
 function CardTitle({ title, badge }: { title: string; badge?: React.ReactNode }) {
   return (
     <span className="flex flex-wrap items-center gap-2">

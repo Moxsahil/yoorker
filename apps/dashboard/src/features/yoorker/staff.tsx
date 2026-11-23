@@ -94,7 +94,6 @@ const ACCESS_INFO: Record<Access, { label: string; detail: string; icon: LucideI
   },
 };
 
-/** Quick starts for the role name; picking one fills in its usual access. */
 const PRESETS: { title: string; access: Access[] }[] = [
   { title: "Manager", access: [...ACCESS] },
   { title: "Receptionist", access: ["bookings", "checkin", "customers"] },
@@ -116,10 +115,8 @@ const lastSeen = (date: string | null, today: string) => {
   return days === 0 ? "Today" : days === 1 ? "Yesterday" : dayLabel(date);
 };
 
-/** 10 digits starting 6-9, the shape of an Indian mobile number. */
 const validPhone = (digits: string) => /^[6-9]\d{9}$/.test(digits);
 
-/** Add someone, or change their details and access when `member` is given. */
 function StaffDialog({
   member,
   open,
@@ -337,7 +334,6 @@ export function StaffPage() {
   const list = team ?? demoTeam(today, venueNames);
   const canManage = myRole === "OWNER" || myRole === "MANAGER";
 
-  // You, from the real session, always first, with everything on.
   const you: TeamMember = {
     id: "me",
     name: me.data?.user.name ?? "You",

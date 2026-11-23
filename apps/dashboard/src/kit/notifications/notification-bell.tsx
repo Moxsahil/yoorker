@@ -13,11 +13,9 @@ export interface BellNotification {
   href: string;
   read: boolean;
   at: string;
-  /** What kind of thing it is about, shown as a tile beside it. */
   icon?: React.ComponentType;
 }
 
-// The list, tabs and empty states load when the bell first opens: no page needs them to paint.
 const loadBody = () => import("./notification-bell-body");
 const NotificationBellBody = lazy(loadBody);
 
@@ -31,9 +29,7 @@ export function NotificationBell({
   items: BellNotification[];
   onMarkRead: (ids: string[] | "all") => void;
   viewAllHref: string;
-  /** Where notification preferences live, linked from the footer. */
   settingsHref?: string;
-  /** Under "You are all caught up": what kinds of things land here. */
   emptyDescription?: string;
 }) {
   const [open, setOpen] = useState(false);
@@ -62,7 +58,6 @@ export function NotificationBell({
       >
         <BellIcon />
         {unread.length > 0 && (
-          // Keyed by the count, so each new notification pops the dot again.
           <span
             key={unread.length}
             className="absolute end-1.5 top-1.5 size-2 animate-pop rounded-full bg-primary ring-2 ring-background"

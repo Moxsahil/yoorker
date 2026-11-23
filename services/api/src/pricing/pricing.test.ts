@@ -56,7 +56,6 @@ describe("example: cricket ground in Rohtak, priced per 3 h 30 m slot", () => {
       unit: "PER_BOOKING",
       pricePaise: rupees * 100,
     });
-  // Morning and afternoon prices are placeholders; each owner sets their own.
   const rohtak: PriceBook = {
     basePricePerHourPaise: null,
     rules: [
@@ -184,8 +183,6 @@ describe("example: badminton hall in Pune with a New Year's Eve price", () => {
     expect(quote({ ...pune, basePricePerHourPaise: null }, at(TUESDAY, "10:00", 60))).toBeNull();
   });
 });
-
-// ---- Properties (TURF-202) -----------------------------------------------
 
 const DATES = Array.from({ length: 21 }, (_, i) => addDays("2026-12-14", i));
 const quarter = (max: number) => fc.integer({ min: 0, max: max / 15 }).map((n) => n * 15);
