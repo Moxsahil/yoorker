@@ -25,6 +25,7 @@ import { api } from "@/lib/api";
 import { demoBookings } from "@/lib/demo-data";
 import { delta, periodMetrics } from "@/lib/metrics";
 import { addDays, datesIn } from "@/lib/period";
+import { useAccess } from "@/lib/access";
 import { useCurrentVenue, useMe } from "@/lib/session";
 import { cn } from "@/lib/utils";
 import {
@@ -108,6 +109,8 @@ export function OverviewPage() {
   const today = todayAt(venue?.timezone);
   const period = usePeriod(today);
   const manager = role === "OWNER" || role === "MANAGER";
+  const { has, can } = useAccess();
+  const money = has("earnings");
 
   const grids = useQueries({
     queries: courts.map((court) => ({
@@ -240,13 +243,17 @@ export function OverviewPage() {
       delta: delta(now.bookings, before.bookings),
       caption: `vs ${before.bookings} ${vs}`,
     },
-    {
-      label: "Revenue",
-      value: inrCompact(now.earningsPaise),
-      icon: IndianRupeeIcon,
-      delta: delta(now.earningsPaise, before.earningsPaise),
-      caption: `${inr(now.earningsPaise)} collected`,
-    },
+    ...(money
+      ? [
+          {
+            label: "Revenue",
+            value: inrCompact(now.earningsPaise),
+            icon: IndianRupeeIcon,
+            delta: delta(now.earningsPaise, before.earningsPaise),
+            caption: `${inr(now.earningsPaise)} collected`,
+          },
+        ]
+      : []),
     {
       label: "Upcoming",
       value: String(upcomingWeek.length),
@@ -285,14 +292,18 @@ export function OverviewPage() {
         }
         actions={
           <>
-            <Link href="/availability" className={buttonVariants({ variant: "outline" })}>
-              <Clock3Icon data-icon="inline-start" />
-              Block a court
-            </Link>
-            <Link href="/bookings?new=true" className={buttonVariants()}>
-              <PlusIcon data-icon="inline-start" />
-              New booking
-            </Link>
+            {can("availability") && (
+              <Link href="/availability" className={buttonVariants({ variant: "outline" })}>
+                <Clock3Icon data-icon="inline-start" />
+                Block a court
+              </Link>
+            )}
+            {can("bookings") && (
+              <Link href="/bookings?new=true" className={buttonVariants()}>
+                <PlusIcon data-icon="inline-start" />
+                New booking
+              </Link>
+            )}
           </>
         }
       />
@@ -301,24 +312,28 @@ export function OverviewPage() {
 
       <StatCards stats={stats} />
 
-      <div className="grid gap-4 xl:grid-cols-3">
-        <RevenueCard
-          now={now}
-          before={before}
-          vs={vs}
-          days={period.range.days}
-          chartKey={`${period.range.from}-${period.range.to}`}
-        />
+      <div className={cn("grid gap-4", money && "xl:grid-cols-3")}>
+        {money && (
+          <RevenueCard
+            now={now}
+            before={before}
+            vs={vs}
+            days={period.range.days}
+            chartKey={`${period.range.from}-${period.range.to}`}
+          />
+        )}
         <UpcomingBookings bookings={upcoming.slice(0, 5)} today={today} />
       </div>
 
-      <div className="grid gap-4 xl:grid-cols-3">
-        <VenuePerformance
-          courts={courts}
-          now={now}
-          before={before}
-          openMinutes={courtOpenMinutes}
-        />
+      <div className={cn("grid gap-4", money && "xl:grid-cols-3")}>
+        {money && (
+          <VenuePerformance
+            courts={courts}
+            now={now}
+            before={before}
+            openMinutes={courtOpenMinutes}
+          />
+        )}
         <RecentActivity
           organisationId={venue.organisationId}
           manager={manager}

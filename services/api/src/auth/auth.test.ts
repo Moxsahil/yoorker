@@ -161,9 +161,9 @@ describe("MembershipService.requireRole", () => {
       .executeTakeFirstOrThrow();
 
     const memberships = app.get(MembershipService);
-    await expect(memberships.requireRole(userId, org.id, ["OWNER", "STAFF"])).resolves.toBe(
-      "STAFF",
-    );
+    await expect(
+      memberships.requireRole(userId, org.id, ["OWNER", "STAFF"]),
+    ).resolves.toMatchObject({ role: "STAFF", venueIds: null });
     await expect(memberships.requireRole(userId, org.id, ["OWNER"])).rejects.toMatchObject({
       status: 403,
     });

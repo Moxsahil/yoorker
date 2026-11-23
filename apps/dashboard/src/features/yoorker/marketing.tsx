@@ -13,6 +13,7 @@ import { Button, buttonVariants } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
+  DialogBody,
   DialogDescription,
   DialogFooter,
   DialogHeader,
@@ -206,7 +207,7 @@ function CampaignDialog({
             it.
           </DialogDescription>
         </DialogHeader>
-        <div className="grid max-h-[65vh] gap-6 overflow-y-auto pe-1 md:grid-cols-[minmax(0,1fr)_15rem]">
+        <DialogBody className="grid gap-6 md:grid-cols-[minmax(0,1fr)_15rem]">
           <div className="flex flex-col gap-4">
             <div className="flex flex-col gap-2">
               <Label htmlFor="cp-name">Campaign name</Label>
@@ -329,7 +330,7 @@ function CampaignDialog({
               {channel === "WHATSAPP" ? "WhatsApp message" : "SMS"}.
             </p>
           </div>
-        </div>
+        </DialogBody>
         {tried && problem && <p className="text-xs text-destructive">{problem}</p>}
         <DialogFooter>
           <Button variant="ghost" onClick={() => create("DRAFT")}>

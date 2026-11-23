@@ -17,7 +17,7 @@ import {
   UserIcon,
   type LucideIcon,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { useRouter } from "@/kit/framework";
 import { Button } from "@/components/ui/button";
@@ -31,6 +31,7 @@ import { PageHeader } from "@/kit/ui-patterns/page-header";
 import { StatusBadge } from "@/kit/ui-patterns/status-badge";
 import { Widget, WidgetHeader } from "@/kit/widgets/widget";
 import { api, ApiError } from "@/lib/api";
+import { useAccess } from "@/lib/access";
 import { useCurrentVenue, useMe } from "@/lib/session";
 import { cn } from "@/lib/utils";
 import type { Me } from "@/lib/yoorker";
@@ -49,6 +50,8 @@ const SECTIONS = [
   { id: "notifications", label: "Notifications", icon: BellIcon },
   { id: "help", label: "Help & support", icon: LifeBuoyIcon },
 ] as const;
+
+const PERSONAL: readonly string[] = ["account", "notifications", "help"];
 
 function Field({
   id,
@@ -1055,23 +1058,28 @@ function HelpCard() {
 export function SettingsPage() {
   const me = useMe();
   const { venue, loading } = useCurrentVenue();
-  const [active, setActive] = useState<string>("business");
+  const business = useAccess().has("settings");
+  const sections = useMemo(
+    () => (business ? SECTIONS : SECTIONS.filter((s) => PERSONAL.includes(s.id))),
+    [business],
+  );
+  const [active, setActive] = useState<string>(sections[0]!.id);
 
   useEffect(() => {
     const update = () => {
       const atEnd =
         window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 4;
-      let current: string = SECTIONS[0].id;
-      for (const section of SECTIONS) {
+      let current: string = sections[0]!.id;
+      for (const section of sections) {
         const el = document.getElementById(section.id);
         if (el && el.getBoundingClientRect().top <= 140) current = section.id;
       }
-      setActive(atEnd ? SECTIONS[SECTIONS.length - 1]!.id : current);
+      setActive(atEnd ? sections[sections.length - 1]!.id : current);
     };
     update();
     window.addEventListener("scroll", update, { passive: true });
     return () => window.removeEventListener("scroll", update);
-  }, [me.data, venue]);
+  }, [me.data, venue, sections]);
 
   if (loading) return <SettingsSkeleton />;
 
@@ -1086,7 +1094,7 @@ export function SettingsPage() {
           aria-label="Settings sections"
           className="flex gap-1 overflow-x-auto lg:sticky lg:top-20 lg:flex-col"
         >
-          {SECTIONS.map((s) => {
+          {sections.map((s) => {
             const Icon = s.icon;
             return (
               <a
@@ -1106,12 +1114,16 @@ export function SettingsPage() {
           })}
         </nav>
         <div className="grid gap-6 xl:grid-cols-2">
-          {venue && <BusinessCard key={venue.id} />}
+          {business && venue && <BusinessCard key={venue.id} />}
           {me.data && <AccountCard key={me.data.user.id} user={me.data.user} />}
-          <PayoutsCard />
-          <CancellationCard />
-          <BookingCard />
-          <SecurityCard />
+          {business && (
+            <>
+              <PayoutsCard />
+              <CancellationCard />
+              <BookingCard />
+              <SecurityCard />
+            </>
+          )}
           <NotificationsCard />
           <HelpCard />
         </div>

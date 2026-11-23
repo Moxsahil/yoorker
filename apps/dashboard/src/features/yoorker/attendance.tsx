@@ -30,12 +30,20 @@ import { toast } from "@/components/ui/toast";
 import { downloadCsv } from "@/kit/data/csv";
 import { Segmented } from "@/kit/ui-patterns/segmented";
 import { Widget, WidgetHeader } from "@/kit/widgets/widget";
-import type { TeamMember } from "@/lib/demo-team";
 import { addDays } from "@/lib/period";
 import { cn } from "@/lib/utils";
-import { dayLabel, inr, WEEKDAY_SHORT } from "@/lib/yoorker";
+import { dayLabel, inr, WEEKDAY_SHORT, type Role } from "@/lib/yoorker";
 
 type Mark = "P" | "H" | "L" | "A" | "O";
+
+export interface AttendanceMember {
+  id: string;
+  name: string;
+  phone: string;
+  role: Role;
+  title: string;
+  lastActive: string | null;
+}
 
 const MARK: Record<Mark, { label: string; cell: string; dot: string; short: string }> = {
   P: {
@@ -70,7 +78,7 @@ const MARK: Record<Mark, { label: string; cell: string; dot: string; short: stri
   },
 };
 
-const SAMPLE_SALARY: Record<TeamMember["role"], number> = {
+const SAMPLE_SALARY: Record<AttendanceMember["role"], number> = {
   OWNER: 0,
   MANAGER: 2_500_000,
   STAFF: 1_400_000,
@@ -87,7 +95,7 @@ const hash = (text: string) => {
 
 const weekdayOf = (date: string) => new Date(`${date}T12:00:00Z`).getUTCDay() || 7;
 
-const offDay = (member: TeamMember) => (hash(member.id) % 7) + 1;
+const offDay = (member: AttendanceMember) => (hash(member.id) % 7) + 1;
 
 const daysOf = (month: string) => {
   const first = `${month}-01`;
@@ -110,7 +118,7 @@ const monthName = (month: string) =>
   });
 
 /** SAMPLE register: mostly present, the odd half day, leave or absence. */
-function sampleMark(member: TeamMember, date: string, today: string): Mark | null {
+function sampleMark(member: AttendanceMember, date: string, today: string): Mark | null {
   if (date > today) return null;
   if (weekdayOf(date) === offDay(member)) return "O";
   if (date === today) return member.lastActive === today ? "P" : null;
@@ -118,7 +126,7 @@ function sampleMark(member: TeamMember, date: string, today: string): Mark | nul
   return roll < 84 ? "P" : roll < 90 ? "H" : roll < 95 ? "L" : "A";
 }
 
-const checkIn = (member: TeamMember, date: string) => {
+const checkIn = (member: AttendanceMember, date: string) => {
   const minutes = 5 * 60 + 30 + (hash(`in|${member.id}|${date}`) % 75);
   return `${String(Math.floor(minutes / 60)).padStart(2, "0")}:${String(minutes % 60).padStart(2, "0")}`;
 };
@@ -135,7 +143,7 @@ interface Totals {
 }
 
 function totalsFor(
-  member: TeamMember,
+  member: AttendanceMember,
   days: string[],
   markOf: (date: string) => Mark | null,
   today: string,
@@ -162,19 +170,19 @@ function totalsFor(
   return t;
 }
 
-export function AttendanceTab({ team, today }: { team: TeamMember[]; today: string }) {
+export function AttendanceTab({ team, today }: { team: AttendanceMember[]; today: string }) {
   const [month, setMonth] = useState(today.slice(0, 7));
   const [edits, setEdits] = useState<Record<string, Mark | null>>({});
   const [salaries, setSalaries] = useState<Record<string, number>>({});
   const days = useMemo(() => daysOf(month), [month]);
   const thisMonth = today.slice(0, 7);
 
-  const markOf = (member: TeamMember, date: string): Mark | null => {
+  const markOf = (member: AttendanceMember, date: string): Mark | null => {
     const key = `${member.id}|${date}`;
     return key in edits ? edits[key]! : sampleMark(member, date, today);
   };
-  const salaryOf = (m: TeamMember) => salaries[m.id] ?? SAMPLE_SALARY[m.role];
-  const setMark = (member: TeamMember, date: string, mark: Mark | null) =>
+  const salaryOf = (m: AttendanceMember) => salaries[m.id] ?? SAMPLE_SALARY[m.role];
+  const setMark = (member: AttendanceMember, date: string, mark: Mark | null) =>
     setEdits((all) => ({ ...all, [`${member.id}|${date}`]: mark }));
 
   const totals = team.map((m) => totalsFor(m, days, (d) => markOf(m, d), today, salaryOf(m)));
