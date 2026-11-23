@@ -166,6 +166,7 @@ export class MembersService {
       .selectFrom("venue")
       .select("id")
       .where("organisation_id", "=", organisationId)
+      .where("deleted_at", "is", null)
       .where("id", "in", venueIds)
       .execute();
     if (found.length !== new Set(venueIds).size) {

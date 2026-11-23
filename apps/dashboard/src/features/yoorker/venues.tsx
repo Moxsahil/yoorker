@@ -3,7 +3,6 @@ import {
   Trash2Icon,
   EllipsisIcon,
   CopyIcon,
-  ImageIcon,
   LandPlotIcon,
   LinkIcon,
   MapPinIcon,
@@ -49,9 +48,9 @@ import { toast } from "@/components/ui/toast";
 import { useBreadcrumbLabel } from "@/kit/shell/breadcrumbs";
 import { PageHeader } from "@/kit/ui-patterns/page-header";
 import { StatusBadge } from "@/kit/ui-patterns/status-badge";
-import { Widget, WidgetHeader } from "@/kit/widgets/widget";
+import { Widget } from "@/kit/widgets/widget";
 import { api, ApiError } from "@/lib/api";
-import { useAllVenues, useRemovedVenues, useVenueChoice } from "@/lib/session";
+import { useAllVenues, useVenueChoice } from "@/lib/session";
 import {
   SPORT_LABEL,
   SURFACE_LABEL,
@@ -64,6 +63,7 @@ import { DEV_NOTES } from "@/lib/dev-notes";
 
 import { LiveBadge, LoadDemoVenueButton, NoVenue } from "./common";
 import { VenueMap } from "./venue-map";
+import { VenuePhotos } from "./venue-photos";
 import { VenueDetailSkeleton, VenuesSkeleton } from "./page-skeletons";
 
 const errorText = (error: unknown) => (error instanceof ApiError ? error.message : String(error));
@@ -162,7 +162,12 @@ export function VenuesPage() {
                       <VenueMenu
                         venue={venue}
                         onEdit={() => setEditing(venue)}
-                        onDelete={() => setDeleting(venue)}
+                        onDelete={
+                          organisations.find((org) => org.id === venue.organisationId)?.role ===
+                          "OWNER"
+                            ? () => setDeleting(venue)
+                            : null
+                        }
                       />
                     </div>
                   )}
@@ -229,7 +234,7 @@ export function VenueDetailPage({ venueId }: { venueId: string }) {
   const client = useQueryClient();
   const { venues, loading } = useAllVenues();
   const venue = venues.find((v) => v.id === venueId);
-  const { manager } = useRole(venue);
+  const { role, manager } = useRole(venue);
   useBreadcrumbLabel(venue?.name ?? null);
   const courts = useCourts(venue?.id);
   const [editing, setEditing] = useState(false);
@@ -238,12 +243,6 @@ export function VenueDetailPage({ venueId }: { venueId: string }) {
     open: boolean;
     court: Court | null;
   }>({ open: false, court: null });
-  const photos = useQuery({
-    queryKey: ["photos", venue?.id],
-    queryFn: () => api<{ id: string; url: string }[]>(`/venues/${venue!.id}/photos`),
-    enabled: Boolean(venue),
-    retry: false,
-  });
 
   if (loading) return <VenueDetailSkeleton />;
   if (!venue) {
@@ -315,7 +314,7 @@ export function VenueDetailPage({ venueId }: { venueId: string }) {
                 Edit
               </Button>
             )}
-            {manager && (
+            {role === "OWNER" && (
               <Button
                 variant="outline"
                 className="text-destructive hover:bg-destructive/10 hover:text-destructive"
@@ -486,29 +485,7 @@ export function VenueDetailPage({ venueId }: { venueId: string }) {
         </Widget>
       </section>
 
-      <Widget>
-        <WidgetHeader title="Photos" icon={ImageIcon} />
-        <div className="px-(--card-spacing) text-sm text-muted-foreground">
-          {photos.data && photos.data.length > 0 ? (
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-              {photos.data.map((p) => (
-                <img
-                  key={p.id}
-                  src={p.url}
-                  alt=""
-                  className="aspect-video rounded-lg object-cover"
-                />
-              ))}
-            </div>
-          ) : (
-            <p>
-              No photos yet.
-              {DEV_NOTES &&
-                " Uploads go straight from the browser to Cloudflare R2 (TURF-103); the upload screen comes with the real dashboard, once this demo's address is added to the bucket's CORS list."}
-            </p>
-          )}
-        </div>
-      </Widget>
+      <VenuePhotos venueId={venue.id} name={venue.name} manager={manager} />
 
       {deleting && (
         <DeleteVenueDialog venue={venue} courts={list.length} onClose={() => setDeleting(false)} />
@@ -538,7 +515,7 @@ function VenueMenu({
 }: {
   venue: Venue;
   onEdit: () => void;
-  onDelete: () => void;
+  onDelete: (() => void) | null;
 }) {
   return (
     <DropdownMenu>
@@ -559,20 +536,20 @@ function VenueMenu({
           <PencilIcon />
           Edit details
         </DropdownMenuItem>
-        <DropdownMenuSeparator />
-        <DropdownMenuItem variant="destructive" onClick={onDelete}>
-          <Trash2Icon />
-          Delete venue
-        </DropdownMenuItem>
+        {onDelete && (
+          <>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem variant="destructive" onClick={onDelete}>
+              <Trash2Icon />
+              Delete venue
+            </DropdownMenuItem>
+          </>
+        )}
       </DropdownMenuContent>
     </DropdownMenu>
   );
 }
 
-/**
- * Deleting needs the venue's name typed in, since it removes its courts, prices and blocks.
- * The API has no delete yet, so for now the venue is hidden on this device.
- */
 function DeleteVenueDialog({
   venue,
   courts,
@@ -583,16 +560,27 @@ function DeleteVenueDialog({
   onClose: () => void;
 }) {
   const router = useRouter();
-  const remove = useRemovedVenues((state) => state.remove);
+  const client = useQueryClient();
   const { venueId, choose } = useVenueChoice();
   const { venues } = useAllVenues();
   const [typed, setTyped] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [failed, setFailed] = useState<string | null>(null);
   const matches = typed.trim().toLowerCase() === venue.name.trim().toLowerCase();
 
-  const confirm = () => {
-    remove(venue.id);
+  const confirm = async () => {
+    setBusy(true);
+    setFailed(null);
+    try {
+      await api(`/venues/${venue.id}`, { method: "DELETE" });
+    } catch (error) {
+      setFailed(error instanceof Error ? error.message : String(error));
+      setBusy(false);
+      return;
+    }
     const next = venues.find((v) => v.id !== venue.id);
     if (venueId === venue.id && next) choose(next.id);
+    await client.invalidateQueries({ queryKey: ["venues", venue.organisationId] });
     toast.add({
       type: "success",
       title: `${venue.name} deleted`,
@@ -608,7 +596,7 @@ function DeleteVenueDialog({
         <DialogHeader>
           <DialogTitle>Delete {venue.name}?</DialogTitle>
           <DialogDescription>
-            This can&apos;t be undone. Players lose its booking page straight away.
+            Players lose its booking page straight away. Its link stays reserved for you.
           </DialogDescription>
         </DialogHeader>
         <div className="flex flex-col gap-4">
@@ -617,7 +605,7 @@ function DeleteVenueDialog({
               {courts} court{courts === 1 ? "" : "s"}, with their hours and prices
             </li>
             <li>All blocks and photos</li>
-            <li>Its booking link, yoorker.com/{venue.slug}</li>
+            <li>Its booking page, yoorker.com/{venue.slug}</li>
           </ul>
           <p className="text-xs text-muted-foreground">
             Past bookings and payouts stay in your reports. To stop bookings for a while instead,
@@ -636,13 +624,14 @@ function DeleteVenueDialog({
               onChange={(e) => setTyped(e.target.value)}
             />
           </div>
+          {failed && <p className="text-xs text-destructive">{failed}</p>}
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>
             Cancel
           </Button>
-          <Button variant="destructive" disabled={!matches} onClick={confirm}>
-            Delete venue
+          <Button variant="destructive" disabled={!matches || busy} onClick={confirm}>
+            {busy ? "Deleting…" : "Delete venue"}
           </Button>
         </DialogFooter>
       </DialogContent>

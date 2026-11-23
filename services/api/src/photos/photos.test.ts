@@ -235,6 +235,42 @@ describe("venue photos (TURF-103)", () => {
     await t.http().get(`/venues/${venueId}/photos`).expect(401);
   });
 
+  it("saves a new order, and the first photo becomes the cover", async () => {
+    const venue = await createVenue("sector-59-photos");
+    const ids = [];
+    for (let i = 0; i < 3; i++) ids.push((await uploadPhoto(venue)).id);
+    const reversed = [...ids].reverse();
+    const res = await t
+      .http()
+      .put(`/venues/${venue}/photos/order`)
+      .set("Cookie", owner.cookie)
+      .send({ photoIds: reversed })
+      .expect(200);
+    const photos = venuePhotoSchema.array().parse(res.body);
+    expect(photos.map((p) => p.id)).toEqual(reversed);
+    expect(photos.map((p) => p.position)).toEqual([0, 1, 2]);
+
+    const listed = await t
+      .http()
+      .get(`/venues/${venue}/photos`)
+      .set("Cookie", owner.cookie)
+      .expect(200);
+    expect(venuePhotoSchema.array().parse(listed.body)[0]!.id).toBe(ids[2]);
+  });
+
+  it("refuses an order that doesn't list exactly the venue's photos", async () => {
+    const venue = await createVenue("sector-60-photos");
+    const a = (await uploadPhoto(venue)).id;
+    const b = (await uploadPhoto(venue)).id;
+    const order = (photoIds: string[], cookie = owner.cookie) =>
+      t.http().put(`/venues/${venue}/photos/order`).set("Cookie", cookie).send({ photoIds });
+    await order([a]).expect(409);
+    await order([a, b, (await uploadPhoto()).id]).expect(409);
+    await order([a, a]).expect(400);
+    await order([b, a], staff.cookie).expect(403);
+    await order([b, a]).expect(200);
+  });
+
   it("stops at 20 photos per venue", async () => {
     const rows = Array.from({ length: 20 }, (_, i) => ({
       venue_id: otherVenueId,

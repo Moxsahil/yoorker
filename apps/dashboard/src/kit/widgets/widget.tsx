@@ -12,9 +12,10 @@ import { cn } from "@/lib/utils";
 
 import { formatPercent } from "../data/format";
 
-export function Widget({ className, children }: { className?: string; children: React.ReactNode }) {
+export function Widget({ className, children, ...props }: React.ComponentProps<"div">) {
   return (
     <Card
+      {...props}
       className={cn(
         "gap-4 rounded-2xl shadow-(--surface-shadow) ring-foreground/5 transition-opacity duration-250 ease-smooth-out starting:opacity-0 [--card-spacing:--spacing(5)]",
         className,
