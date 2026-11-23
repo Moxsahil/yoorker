@@ -3,7 +3,9 @@ import { useQueryClient } from "@tanstack/react-query";
 import { ArrowLeftIcon, SmartphoneIcon } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 
-import { Button } from "@/components/ui/button";
+import { cn } from "cn";
+
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 import { Label } from "@/components/ui/label";
@@ -48,6 +50,30 @@ declare global {
   }
 }
 
+/** Google's "G" mark, in its brand colours. */
+function GoogleMark() {
+  return (
+    <svg viewBox="0 0 48 48" aria-hidden className="size-4">
+      <path
+        fill="#FFC107"
+        d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"
+      />
+      <path
+        fill="#FF3D00"
+        d="m6.3 14.7 6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"
+      />
+      <path
+        fill="#4CAF50"
+        d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-7.9l-6.5 5C9.5 39.6 16.2 44 24 44z"
+      />
+      <path
+        fill="#1976D2"
+        d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"
+      />
+    </svg>
+  );
+}
+
 /**
  * Yoorker sign-in against the real API: Google (when VITE_GOOGLE_CLIENT_ID is set and
  * this origin is allowed on the OAuth client), and phone OTP, which the local API allows in
@@ -62,6 +88,7 @@ export function YoorkerSignIn() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const googleButton = useRef<HTMLDivElement>(null);
+  const [googleReady, setGoogleReady] = useState(false);
 
   const signedIn = useCallback(
     (me: Me) => {
@@ -102,12 +129,16 @@ export function YoorkerSignIn() {
               signedIn(await api<Me>("/auth/google", { body: { idToken: credential } })),
             ),
         });
+        // Google's own button lives in a cross-origin iframe we can't style, so it sits
+        // invisibly over our button and takes the click. Same width and height as ours.
+        const width = Math.round(googleButton.current.getBoundingClientRect().width);
         window.google.accounts.id.renderButton(googleButton.current, {
           theme: "outline",
-          size: "large",
-          width: 360,
+          size: "medium",
+          width: Math.min(400, Math.max(200, width)),
           text: "continue_with",
         });
+        setGoogleReady(true);
       })
       .catch(() => undefined);
     return () => {
@@ -124,7 +155,25 @@ export function YoorkerSignIn() {
       />
       {GOOGLE_CLIENT_ID && (
         <>
-          <div ref={googleButton} className="flex min-h-10 justify-center" />
+          <div className="group/google relative">
+            <div
+              aria-hidden
+              className={cn(
+                buttonVariants({ variant: "outline" }),
+                "pointer-events-none w-full",
+                "group-hover/google:bg-muted dark:group-hover/google:bg-input/50",
+                "group-focus-within/google:border-ring group-focus-within/google:ring-3 group-focus-within/google:ring-ring/50",
+                !googleReady && "opacity-50",
+              )}
+            >
+              <GoogleMark />
+              Continue with Google
+            </div>
+            <div
+              ref={googleButton}
+              className="absolute inset-0 overflow-hidden opacity-0 [color-scheme:light]"
+            />
+          </div>
           <div className="my-6 flex items-center gap-3 text-xs text-muted-foreground">
             <span className="h-px flex-1 bg-border" />
             or with your mobile

@@ -2,7 +2,7 @@ import { defineTheme } from "@/kit/customizer/settings";
 import { LIBRARY_PRESETS } from "@/kit/theme/library";
 
 /**
- * Chronicle's look, as the Kit customizer sees it. The default preset is the
+ * Yoorker's look, as the Kit customizer sees it. The default preset is the
  * slate and cobalt theme in app/globals.css, so its token lists are empty; the
  * Kit's library presets restyle every surface for anyone who wants another
  * world. `config/theme.test.ts` checks every preset against the Kit contract.
@@ -23,7 +23,7 @@ export const THEME = defineTheme({
   presets: [
     {
       id: "default",
-      name: "Chronicle",
+      name: "Yoorker",
       swatches: [
         "oklch(0.515 0.19 263)",
         "oklch(0.215 0.028 264)",

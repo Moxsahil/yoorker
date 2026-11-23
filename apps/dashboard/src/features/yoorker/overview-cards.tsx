@@ -16,7 +16,7 @@ import {
 } from "lucide-react";
 
 import { Link } from "@/kit/framework";
-import { PillBars } from "@/components/chronicle/charts";
+import { PillBars } from "@/components/yoorker/charts";
 import { buttonVariants } from "@/components/ui/button";
 import {
   Table,

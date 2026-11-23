@@ -1,7 +1,7 @@
 import { CheckIcon } from "lucide-react";
 
 import { Link } from "@/kit/framework";
-import { BrandCredit, BrandLogo } from "@/components/chronicle/brand-logo";
+import { BrandLogo } from "@/components/yoorker/brand-logo";
 import { DEV_NOTES } from "@/lib/dev-notes";
 
 const POINTS = [
@@ -9,12 +9,12 @@ const POINTS = [
   "Your own hours, slot lengths and prices for every court",
   "Know what each court is doing right now",
 ];
-const PANEL = "/auth/panel.webp";
+const PANEL = "/auth/panel.svg";
 const DEMO_NOTE = "Local demo: sign in with your mobile. The code is printed in the API terminal.";
 
 /**
- * Chronicle's auth frame: a quiet slate panel beside the form on wide screens,
- * the form alone on small ones. The panel art is one 68 KB webp, no shader.
+ * Yoorker's auth frame: a quiet slate panel beside the form on wide screens,
+ * the form alone on small ones. The panel art is one small SVG: a floodlit multi-sport complex.
  */
 export function AuthShell({ children }: { children: React.ReactNode }) {
   return (
@@ -42,10 +42,7 @@ export function AuthShell({ children }: { children: React.ReactNode }) {
             ))}
           </ul>
         </div>
-        <div className="flex items-end justify-between gap-4 text-xs">
-          {DEV_NOTES && <p className="opacity-60">{DEMO_NOTE}</p>}
-          <BrandCredit className="text-(--auth-panel-foreground)/70 hover:text-(--auth-panel-foreground)" />
-        </div>
+        {DEV_NOTES && <p className="text-xs opacity-60">{DEMO_NOTE}</p>}
       </aside>
 
       <main className="flex flex-col px-4 py-8 sm:px-8">
@@ -55,10 +52,9 @@ export function AuthShell({ children }: { children: React.ReactNode }) {
         <div className="flex flex-1 items-center justify-center py-10">
           <div className="w-full max-w-sm">{children}</div>
         </div>
-        <div className="flex flex-col items-center gap-2 lg:hidden">
-          {DEV_NOTES && <p className="text-center text-xs text-muted-foreground">{DEMO_NOTE}</p>}
-          <BrandCredit />
-        </div>
+        {DEV_NOTES && (
+          <p className="text-center text-xs text-muted-foreground lg:hidden">{DEMO_NOTE}</p>
+        )}
       </main>
     </div>
   );

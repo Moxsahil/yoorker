@@ -2,8 +2,8 @@ import { useQueries } from "@tanstack/react-query";
 import { ChartColumnIcon, ClockIcon, Grid3x3Icon, LandPlotIcon, ShuffleIcon } from "lucide-react";
 import { useMemo } from "react";
 
-import { HourBars } from "@/components/chronicle/charts";
-import { Heatmap } from "@/components/chronicle/heatmap";
+import { HourBars } from "@/components/yoorker/charts";
+import { Heatmap } from "@/components/yoorker/heatmap";
 import { change, formatPercent } from "@/kit/data/format";
 import { PageHeader } from "@/kit/ui-patterns/page-header";
 import { Delta, Widget, WidgetHeader } from "@/kit/widgets/widget";
