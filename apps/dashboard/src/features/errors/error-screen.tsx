@@ -1,6 +1,6 @@
 import { Link } from "@/kit/framework";
 import { buttonVariants } from "@/components/ui/button";
-import { BrandLogo } from "@/components/chronicle/brand-logo";
+import { BrandLogo } from "@/components/yoorker/brand-logo";
 import { StatusPage } from "@/kit/states/status-page";
 
 /**

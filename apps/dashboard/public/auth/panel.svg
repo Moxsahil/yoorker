@@ -1,0 +1,179 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 1000" preserveAspectRatio="xMidYMid slice">
+  <!-- Yoorker sign-in panel: a floodlit multi-sport complex at night, seen from above.
+       Football turf, box cricket, badminton, two pickleball courts and cricket nets.
+       The courts sit in the upper middle; top and bottom stay dark for the logo and text. -->
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#070d22" />
+      <stop offset="0.45" stop-color="#0c1a42" />
+      <stop offset="1" stop-color="#070c1f" />
+    </linearGradient>
+    <radialGradient id="halo" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#2f6bff" stop-opacity="0.45" />
+      <stop offset="0.6" stop-color="#1d3f9e" stop-opacity="0.15" />
+      <stop offset="1" stop-color="#0c1a42" stop-opacity="0" />
+    </radialGradient>
+    <radialGradient id="pool" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#dfe9ff" stop-opacity="0.32" />
+      <stop offset="0.45" stop-color="#8fb0ff" stop-opacity="0.1" />
+      <stop offset="1" stop-color="#8fb0ff" stop-opacity="0" />
+    </radialGradient>
+    <radialGradient id="lamp" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#ffffff" />
+      <stop offset="0.25" stop-color="#cfe0ff" stop-opacity="0.9" />
+      <stop offset="1" stop-color="#5b8cff" stop-opacity="0" />
+    </radialGradient>
+    <pattern id="mow" width="70" height="10" patternUnits="userSpaceOnUse">
+      <rect width="35" height="10" fill="#1a6a55" />
+      <rect x="35" width="35" height="10" fill="#175e4c" />
+    </pattern>
+    <pattern id="mesh" width="8" height="8" patternUnits="userSpaceOnUse">
+      <path d="M0 0L8 8M8 0L0 8" stroke="#cfe0ff" stroke-opacity="0.12" stroke-width="0.8" />
+    </pattern>
+    <linearGradient id="fadeBottom" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#080e24" stop-opacity="0" />
+      <stop offset="0.55" stop-color="#080e24" stop-opacity="0.85" />
+      <stop offset="1" stop-color="#080e24" />
+    </linearGradient>
+    <linearGradient id="fadeTop" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#060b1d" stop-opacity="0.9" />
+      <stop offset="1" stop-color="#060b1d" stop-opacity="0" />
+    </linearGradient>
+  </defs>
+
+  <rect width="800" height="1000" fill="url(#sky)" />
+  <ellipse cx="400" cy="420" rx="470" ry="300" fill="url(#halo)" />
+
+  <!-- Everything below is drawn flat (a 720 × 560 site plan) and tilted into an aerial view. -->
+  <g transform="translate(400 410) scale(0.74) scale(1 0.62) rotate(-28) translate(-360 -280)">
+    <!-- The city grid around the site, fading out. -->
+    <g stroke="#3b6fe0" stroke-width="1.4" opacity="0.28">
+      <path d="M-700 -60H1420M-700 -180H1420M-700 -320H1420M-700 620H1420M-700 760H1420M-700 920H1420" />
+      <path d="M-60 -700V1260M-200 -700V1260M-360 -700V1260M780 -700V1260M920 -700V1260M1080 -700V1260" />
+    </g>
+    <g stroke="#6f9bff" stroke-width="2.2" opacity="0.5">
+      <path d="M-700 -20H1420M-700 580H1420M-20 -700V1260M740 -700V1260" />
+    </g>
+
+    <!-- Site plate -->
+    <rect x="0" y="0" width="720" height="560" rx="10" fill="#0d1731" stroke="#4a7cf0" stroke-opacity="0.55" stroke-width="2" />
+
+    <!-- Football: 5-a-side turf -->
+    <g>
+      <rect x="20" y="20" width="420" height="270" rx="4" fill="url(#mow)" />
+      <g fill="none" stroke="#eef4ff" stroke-opacity="0.85" stroke-width="2.4">
+        <rect x="32" y="32" width="396" height="246" />
+        <path d="M230 32V278" />
+        <circle cx="230" cy="155" r="36" />
+        <rect x="32" y="95" width="60" height="120" />
+        <rect x="368" y="95" width="60" height="120" />
+        <rect x="22" y="135" width="10" height="40" />
+        <rect x="428" y="135" width="10" height="40" />
+      </g>
+      <circle cx="230" cy="155" r="3" fill="#eef4ff" />
+      <circle cx="292" cy="128" r="3.4" fill="#ffffff" />
+    </g>
+
+    <!-- Box cricket: netted turf with a pitch -->
+    <g>
+      <rect x="460" y="20" width="240" height="270" rx="4" fill="#185f4d" />
+      <rect x="460" y="20" width="240" height="270" rx="4" fill="url(#mesh)" />
+      <rect x="460" y="20" width="240" height="270" rx="4" fill="none" stroke="#dfe9ff" stroke-opacity="0.7" stroke-width="2.4" stroke-dasharray="6 4" />
+      <rect x="570" y="70" width="20" height="170" fill="#a8a07e" opacity="0.75" />
+      <g stroke="#ffffff" stroke-opacity="0.9" stroke-width="2">
+        <path d="M558 92H602M558 218H602M564 80V92M570 80V92M564 218V230" />
+      </g>
+      <g fill="#fff6dc">
+        <rect x="575" y="78" width="10" height="4" />
+        <rect x="575" y="228" width="10" height="4" />
+      </g>
+      <circle cx="584" cy="150" r="3" fill="#ff5a5a" />
+    </g>
+
+    <!-- Badminton -->
+    <g>
+      <rect x="20" y="320" width="100" height="220" fill="#1c4a8f" />
+      <g fill="none" stroke="#eef4ff" stroke-opacity="0.85" stroke-width="2">
+        <rect x="20" y="320" width="100" height="220" />
+        <path d="M27.5 320V540M112.5 320V540" />
+        <path d="M20 397.5H120M20 462.5H120M20 332.5H120M20 527.5H120" />
+        <path d="M70 320V397.5M70 462.5V540" />
+      </g>
+      <path d="M14 430H126" stroke="#ffffff" stroke-width="3" />
+    </g>
+
+    <!-- Pickleball: two courts on a shared surround -->
+    <g>
+      <rect x="132" y="312" width="236" height="236" rx="4" fill="#165a4b" />
+      <g fill="#2160b5">
+        <rect x="140" y="320" width="100" height="220" />
+        <rect x="260" y="320" width="100" height="220" />
+      </g>
+      <g fill="#3478d0">
+        <rect x="140" y="395" width="100" height="70" />
+        <rect x="260" y="395" width="100" height="70" />
+      </g>
+      <g fill="none" stroke="#eef4ff" stroke-opacity="0.85" stroke-width="2">
+        <rect x="140" y="320" width="100" height="220" />
+        <rect x="260" y="320" width="100" height="220" />
+        <path d="M140 395H240M140 465H240M260 395H360M260 465H360" />
+        <path d="M190 320V395M190 465V540M310 320V395M310 465V540" />
+      </g>
+      <path d="M134 430H246M254 430H366" stroke="#ffffff" stroke-width="3" />
+      <circle cx="205" cy="372" r="3.2" fill="#e8ff5a" />
+    </g>
+
+    <!-- Cricket practice nets: three lanes -->
+    <g>
+      <g fill="#14503f">
+        <rect x="390" y="325" width="310" height="66" />
+        <rect x="390" y="397" width="310" height="66" />
+        <rect x="390" y="469" width="310" height="66" />
+      </g>
+      <g fill="url(#mesh)">
+        <rect x="390" y="325" width="310" height="66" />
+        <rect x="390" y="397" width="310" height="66" />
+        <rect x="390" y="469" width="310" height="66" />
+      </g>
+      <g fill="#a8a07e" opacity="0.75">
+        <rect x="470" y="351" width="190" height="14" />
+        <rect x="470" y="423" width="190" height="14" />
+        <rect x="470" y="495" width="190" height="14" />
+      </g>
+      <g fill="none" stroke="#dfe9ff" stroke-opacity="0.65" stroke-width="2" stroke-dasharray="6 4">
+        <path d="M700 325H390V391H700M700 397H390V463H700M700 469H390V535H700" />
+      </g>
+      <g stroke="#ffffff" stroke-opacity="0.85" stroke-width="2">
+        <path d="M486 345V371M644 345V371M486 417V443M644 417V443M486 489V515M644 489V515" />
+      </g>
+    </g>
+
+    <!-- Light pools from the floodlights -->
+    <g style="mix-blend-mode: screen">
+      <circle cx="0" cy="0" r="230" fill="url(#pool)" />
+      <circle cx="360" cy="-10" r="230" fill="url(#pool)" />
+      <circle cx="720" cy="0" r="230" fill="url(#pool)" />
+      <circle cx="0" cy="560" r="230" fill="url(#pool)" />
+      <circle cx="360" cy="570" r="230" fill="url(#pool)" />
+      <circle cx="720" cy="560" r="230" fill="url(#pool)" />
+      <circle cx="-10" cy="280" r="200" fill="url(#pool)" />
+      <circle cx="730" cy="280" r="200" fill="url(#pool)" />
+    </g>
+
+    <!-- Floodlight heads -->
+    <g>
+      <circle cx="-8" cy="-8" r="26" fill="url(#lamp)" />
+      <circle cx="360" cy="-14" r="26" fill="url(#lamp)" />
+      <circle cx="728" cy="-8" r="26" fill="url(#lamp)" />
+      <circle cx="-8" cy="568" r="26" fill="url(#lamp)" />
+      <circle cx="360" cy="574" r="26" fill="url(#lamp)" />
+      <circle cx="728" cy="568" r="26" fill="url(#lamp)" />
+      <circle cx="-14" cy="280" r="22" fill="url(#lamp)" />
+      <circle cx="734" cy="280" r="22" fill="url(#lamp)" />
+    </g>
+  </g>
+
+  <!-- Keep the logo (top) and the headline and points (bottom) readable. -->
+  <rect width="800" height="190" fill="url(#fadeTop)" />
+  <rect y="560" width="800" height="440" fill="url(#fadeBottom)" />
+</svg>

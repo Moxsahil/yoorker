@@ -7,7 +7,7 @@
 @custom-variant dark (&:is(.dark *));
 
 /*
- * Chronicle's theme: cool slate neutrals with one cobalt accent. Every surface
+ * Yoorker's theme: cool slate neutrals with one cobalt accent. Every surface
  * carries the slate hue (page, card, muted, border, sidebar, charts), so the
  * theme reads as its own world, not shadcn neutral with a blue button.
  * Charts: the lead series is --chart-lead, then --chart-2 and --chart-3.
