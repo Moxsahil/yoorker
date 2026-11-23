@@ -27,6 +27,7 @@ import { BOOKING, PAYMENT } from "./booking-labels";
 import { BookingsCalendar } from "./bookings-calendar";
 import { SampleBadge } from "./common";
 import { NewBookingDialog } from "./new-booking";
+import { BookingsSkeleton } from "./page-skeletons";
 
 type View = "today" | "upcoming" | "past";
 
@@ -37,7 +38,7 @@ type Layout = (typeof LAYOUTS)[number];
 const PAGE = 40;
 
 export function BookingsPage() {
-  const { courts } = useCurrentVenue();
+  const { courts, loading } = useCurrentVenue();
   const today = todayAt();
   const clock = new Intl.DateTimeFormat("en-GB", {
     timeZone: "Asia/Kolkata",
@@ -90,6 +91,8 @@ export function BookingsPage() {
         ? `${b.date}${b.start}`.localeCompare(`${a.date}${a.start}`)
         : `${a.date}${a.start}`.localeCompare(`${b.date}${b.start}`),
     );
+
+  if (loading) return <BookingsSkeleton />;
 
   return (
     <div className="flex flex-col gap-6">

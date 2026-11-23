@@ -37,6 +37,7 @@ import type { Me } from "@/lib/yoorker";
 import { DEV_NOTES } from "@/lib/dev-notes";
 
 import { LiveBadge, SampleBadge } from "./common";
+import { SettingsSkeleton } from "./page-skeletons";
 
 const SECTIONS = [
   { id: "business", label: "Business profile", icon: Building2Icon },
@@ -1103,7 +1104,7 @@ function HelpCard() {
 
 export function SettingsPage() {
   const me = useMe();
-  const { venue } = useCurrentVenue();
+  const { venue, loading } = useCurrentVenue();
   const [active, setActive] = useState<string>("business");
 
   // Highlight the section being read: the last one whose top has passed near the top bar.
@@ -1123,6 +1124,8 @@ export function SettingsPage() {
     window.addEventListener("scroll", update, { passive: true });
     return () => window.removeEventListener("scroll", update);
   }, [me.data, venue]);
+
+  if (loading) return <SettingsSkeleton />;
 
   return (
     <div className="flex flex-col gap-6">

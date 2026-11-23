@@ -9,6 +9,23 @@ import { THEME } from "@/config/theme";
 import { AuthShell } from "@/features/auth/auth-shell";
 import { ErrorScreen } from "@/features/errors/error-screen";
 import { YoorkerShell } from "@/features/shell/yoorker-shell";
+import {
+  AnalyticsSkeleton,
+  AvailabilitySkeleton,
+  BookingsSkeleton,
+  CustomersSkeleton,
+  EarningsSkeleton,
+  GenericSkeleton,
+  LiveSkeleton,
+  MarketingSkeleton,
+  OffersSkeleton,
+  OverviewSkeleton,
+  ReviewsSkeleton,
+  SettingsSkeleton,
+  StaffSkeleton,
+  VenueDetailSkeleton,
+  VenuesSkeleton,
+} from "@/features/yoorker/page-skeletons";
 import { CustomizerProvider } from "@/kit/customizer/customizer-provider";
 import { QueryProvider } from "@/kit/data/query-provider";
 
@@ -21,13 +38,21 @@ function Title({ children }: { children: string }) {
  * Each page is its own chunk, loaded when it is first opened. Navigations run as transitions,
  * so the current page stays on screen until the next one is ready.
  */
-function page<M>(title: string, load: () => Promise<M>, pick: (module: M) => ComponentType) {
+function page<M>(
+  title: string,
+  load: () => Promise<M>,
+  pick: (module: M) => ComponentType,
+  Loading: ComponentType = GenericSkeleton,
+) {
   const Page = lazy(() => load().then((module) => ({ default: pick(module) })));
   return function TitledPage() {
     return (
       <>
         <Title>{title}</Title>
-        <Page />
+        {/* While the page's code loads, its skeleton; the shell stays as it is. */}
+        <Suspense fallback={<Loading />}>
+          <Page />
+        </Suspense>
       </>
     );
   };
@@ -37,21 +62,25 @@ const Overview = page(
   "Overview",
   () => import("@/features/yoorker/overview"),
   (m) => m.OverviewPage,
+  OverviewSkeleton,
 );
 const Bookings = page(
   "Bookings",
   () => import("@/features/yoorker/bookings"),
   (m) => m.BookingsPage,
+  BookingsSkeleton,
 );
 const Live = page(
   "Live board",
   () => import("@/features/yoorker/live"),
   (m) => m.LivePage,
+  LiveSkeleton,
 );
 const Venues = page(
   "Venues & courts",
   () => import("@/features/yoorker/venues"),
   (m) => m.VenuesPage,
+  VenuesSkeleton,
 );
 const NewVenue = page(
   "Add venue",
@@ -62,46 +91,55 @@ const Availability = page(
   "Availability & pricing",
   () => import("@/features/yoorker/availability"),
   (m) => m.AvailabilityPage,
+  AvailabilitySkeleton,
 );
 const Customers = page(
   "Customers",
   () => import("@/features/yoorker/customers"),
   (m) => m.CustomersPage,
+  CustomersSkeleton,
 );
 const Staff = page(
   "Staff",
   () => import("@/features/yoorker/staff"),
   (m) => m.StaffPage,
+  StaffSkeleton,
 );
 const Earnings = page(
   "Earnings & payouts",
   () => import("@/features/yoorker/earnings"),
   (m) => m.EarningsPage,
+  EarningsSkeleton,
 );
 const Offers = page(
   "Offers & discounts",
   () => import("@/features/yoorker/offers"),
   (m) => m.OffersPage,
+  OffersSkeleton,
 );
 const Analytics = page(
   "Analytics",
   () => import("@/features/yoorker/analytics"),
   (m) => m.AnalyticsPage,
+  AnalyticsSkeleton,
 );
 const Reviews = page(
   "Reviews",
   () => import("@/features/yoorker/reviews"),
   (m) => m.ReviewsPage,
+  ReviewsSkeleton,
 );
 const Marketing = page(
   "Marketing",
   () => import("@/features/yoorker/marketing"),
   (m) => m.MarketingPage,
+  MarketingSkeleton,
 );
 const Settings = page(
   "Settings",
   () => import("@/features/yoorker/settings"),
   (m) => m.SettingsPage,
+  SettingsSkeleton,
 );
 const VenueDetail = page(
   "Venue",
@@ -110,6 +148,7 @@ const VenueDetail = page(
     function VenueRoute() {
       return <m.VenueDetailPage venueId={useParams().venueId!} />;
     },
+  VenueDetailSkeleton,
 );
 const SignIn = page(
   "Sign in",

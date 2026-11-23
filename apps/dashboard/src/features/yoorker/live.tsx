@@ -33,6 +33,7 @@ import {
 import { DEV_NOTES } from "@/lib/dev-notes";
 
 import { LiveBadge, NoVenue } from "./common";
+import { LiveSkeleton } from "./page-skeletons";
 
 type State = "PLAYING" | "FREE" | "BLOCKED" | "CLOSED";
 
@@ -370,7 +371,7 @@ export function LivePage() {
       refetchInterval: 30_000,
     })),
   });
-  if (loading) return <Skeleton className="h-96" />;
+  if (loading) return <LiveSkeleton />;
   if (!venue) return <NoVenue />;
 
   const clock = new Intl.DateTimeFormat("en-GB", {

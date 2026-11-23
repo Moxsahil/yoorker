@@ -33,6 +33,7 @@ import { useCurrentVenue } from "@/lib/session";
 import { dayLabel, inr, todayAt } from "@/lib/yoorker";
 
 import { SampleBadge } from "./common";
+import { CustomersSkeleton } from "./page-skeletons";
 
 /** Rows shown at first, and added by each "Show more". */
 const PAGE = 40;
@@ -122,7 +123,7 @@ async function downloadPdf(venue: string, today: string, rows: DemoCustomer[], s
 }
 
 export function CustomersPage() {
-  const { courts, venue } = useCurrentVenue();
+  const { courts, venue, loading } = useCurrentVenue();
   const venueName = venue?.name ?? "Venue";
   const today = todayAt();
   const [search, setSearch] = useState("");
@@ -146,6 +147,8 @@ export function CustomersPage() {
       c.name.toLowerCase().includes(query) ||
       (digits.length > 2 && c.phone.replace(/\D/g, "").includes(digits)),
   );
+
+  if (loading) return <CustomersSkeleton />;
 
   return (
     <div className="flex flex-col gap-6">

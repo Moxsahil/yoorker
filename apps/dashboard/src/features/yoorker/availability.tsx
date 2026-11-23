@@ -34,6 +34,7 @@ import { DEV_NOTES } from "@/lib/dev-notes";
 
 import { LiveBadge, NoVenue } from "./common";
 import { PricesCard } from "./prices-editor";
+import { AvailabilitySkeleton } from "./page-skeletons";
 
 /** "2026-11-19T12:30:00.000Z" → "2026-11-19T18:00" at the venue. */
 function localDateTime(iso: string, timeZone: string): string {
@@ -386,7 +387,7 @@ export function AvailabilityPage() {
     enabled: Boolean(courtId) && manager,
   });
 
-  if (loading) return <Skeleton className="h-96" />;
+  if (loading) return <AvailabilitySkeleton />;
   if (!venue || !courtId) {
     return (
       <div className="flex flex-col gap-6">

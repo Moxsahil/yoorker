@@ -34,9 +34,69 @@
         document.documentElement.style.colorScheme = dark ? "dark" : "light";
       } catch (e) {}
     </script>
+    <!-- The boot splash: the Yoorker mark on the page colour until React and the session are
+         ready. It only fades in after 400 ms, so a fast load shows nothing but the background.
+         BootSplash (components/yoorker/boot-splash.tsx) reuses these classes. -->
+    <style>
+      html {
+        background: #f4f6f9;
+      }
+      html.dark {
+        background: #10141c;
+      }
+      body {
+        margin: 0;
+      }
+      .boot {
+        min-height: 100svh;
+        display: grid;
+        place-items: center;
+      }
+      .boot svg {
+        width: 44px;
+        height: 44px;
+        opacity: 0;
+        animation: boot-in 240ms ease-out 400ms forwards;
+      }
+      .boot.now svg {
+        animation: none;
+        opacity: 1;
+      }
+      @keyframes boot-in {
+        to {
+          opacity: 1;
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .boot svg {
+          animation-duration: 1ms;
+        }
+      }
+    </style>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <div class="boot" role="status" aria-label="Loading Yoorker">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <defs>
+            <linearGradient id="boot-tile" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stop-color="#4a7bff" />
+              <stop offset="1" stop-color="#1e3fb8" />
+            </linearGradient>
+          </defs>
+          <rect width="24" height="24" rx="6.5" fill="url(#boot-tile)" />
+          <path
+            d="M6.6 5.8 12 12.4 17.4 5.8M12 12.4v3.2"
+            fill="none"
+            stroke="#fff"
+            stroke-width="2.7"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+          <circle cx="12" cy="19" r="2.1" fill="#c8f53c" />
+        </svg>
+      </div>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

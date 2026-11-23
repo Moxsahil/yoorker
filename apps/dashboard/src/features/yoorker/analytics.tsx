@@ -16,6 +16,7 @@ import { inr, lengthLabel, todayAt, WEEKDAY_SHORT, type CourtSchedule } from "@/
 
 import { NoVenue, SampleBadge } from "./common";
 import { PeriodFilter, usePeriod } from "./period-filter";
+import { AnalyticsSkeleton } from "./page-skeletons";
 
 const hourName = (hour: number) => `${hour % 12 || 12}${hour < 12 ? "am" : "pm"}`;
 
@@ -147,7 +148,7 @@ export function AnalyticsPage() {
     }));
   const online = list.filter((b) => b.source === "ONLINE").length;
 
-  if (loading) return null;
+  if (loading) return <AnalyticsSkeleton />;
   if (!venue) {
     return (
       <div className="flex flex-col gap-6">

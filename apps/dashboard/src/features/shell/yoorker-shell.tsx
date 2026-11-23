@@ -23,7 +23,7 @@ import { AppShell } from "@/kit/shell/app-shell";
 import type { ShellConfig, Workspace } from "@/kit/shell/types";
 import { ShortcutsProvider, useShortcutsHelp } from "@/kit/shortcuts/shortcuts";
 import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
+import { BootSplash } from "@/components/yoorker/boot-splash";
 import { api } from "@/lib/api";
 import { demoBookings } from "@/lib/demo-data";
 import { useCurrentVenue, useMe, useVenueChoice } from "@/lib/session";
@@ -253,11 +253,7 @@ export function YoorkerShell({ children }: { children: React.ReactNode }) {
     );
   }
   if (!me.data) {
-    return (
-      <div className="flex min-h-svh items-center justify-center p-8">
-        <Skeleton className="h-10 w-48" />
-      </div>
-    );
+    return <BootSplash />;
   }
   return (
     <ShortcutsProvider

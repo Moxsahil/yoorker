@@ -54,6 +54,7 @@ import { dayLabel, todayAt } from "@/lib/yoorker";
 
 import { AttendanceTab } from "./attendance";
 import { SampleBadge } from "./common";
+import { StaffSkeleton } from "./page-skeletons";
 
 const ACCESS_INFO: Record<Access, { label: string; detail: string; icon: LucideIcon }> = {
   bookings: {
@@ -324,7 +325,7 @@ function StaffDialog({
 
 export function StaffPage() {
   const me = useMe();
-  const { venues, role: myRole } = useCurrentVenue();
+  const { venues, role: myRole, loading } = useCurrentVenue();
   const today = todayAt();
   const venueNames = useMemo(() => [...new Set(venues.map((v) => v.name))], [venues]);
   const [team, setTeam] = useState<TeamMember[] | null>(null);
@@ -368,6 +369,8 @@ export function StaffPage() {
       title: `${ACCESS_INFO[key].label} ${on ? "on" : "off"} for ${m.name}`,
     });
   };
+
+  if (loading) return <StaffSkeleton />;
 
   return (
     <div className="flex flex-col gap-6">

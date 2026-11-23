@@ -35,6 +35,7 @@ import { cn } from "@/lib/utils";
 import { dayLabel, inr, todayAt, WEEKDAY_SHORT } from "@/lib/yoorker";
 
 import { SampleBadge } from "./common";
+import { OffersSkeleton } from "./page-skeletons";
 
 const STATE: Record<OfferState, { label: string; tone: Tone }> = {
   ACTIVE: { label: "Running", tone: "success" },
@@ -339,7 +340,7 @@ function OfferDialog({
 }
 
 export function OffersPage() {
-  const { courts } = useCurrentVenue();
+  const { courts, loading } = useCurrentVenue();
   const today = todayAt();
   const courtNames = useMemo(() => courts.map((c) => c.name), [courts]);
   const [offers, setOffers] = useState<Offer[] | null>(null);
@@ -356,6 +357,8 @@ export function OffersPage() {
   });
   const given = list.reduce((s, o) => s + o.givenPaise, 0);
   const uses = list.reduce((s, o) => s + o.used, 0);
+
+  if (loading) return <OffersSkeleton />;
 
   return (
     <div className="flex flex-col gap-6">
