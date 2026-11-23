@@ -4,6 +4,7 @@ import { sql } from "kysely";
 import { isUniqueViolation } from "../common/pg-errors";
 import { DB } from "../database/database.module";
 import type { GoogleProfile } from "./google-verifier";
+import { acceptInvites } from "./invites";
 
 @Injectable()
 export class GoogleSignInService {
@@ -39,6 +40,7 @@ export class GoogleSignInService {
           .where("id", "=", known.user_id)
           .where("email", "is distinct from", email)
           .execute();
+        await acceptInvites(trx, known.user_id, email);
         return known.user_id;
       }
 
@@ -51,6 +53,7 @@ export class GoogleSignInService {
         .insertInto("user_identity")
         .values({ user_id: user.id, provider: "GOOGLE", subject: profile.subject })
         .execute();
+      await acceptInvites(trx, user.id, email);
       return user.id;
     });
   }

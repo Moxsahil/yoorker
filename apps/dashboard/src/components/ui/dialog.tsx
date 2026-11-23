@@ -3,6 +3,7 @@ import { Dialog as DialogPrimitive } from "@base-ui/react/dialog";
 import { cn } from "cn";
 
 import { Button } from "@/components/ui/button";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { XIcon } from "lucide-react";
 
 function Dialog({ ...props }: DialogPrimitive.Root.Props) {
@@ -74,6 +75,16 @@ function DialogHeader({ className, ...props }: React.ComponentProps<"div">) {
   );
 }
 
+function DialogBody({ className, children }: { className?: string; children: React.ReactNode }) {
+  return (
+    <ScrollArea className="-mx-4 **:data-[slot=scroll-area-viewport]:max-h-[min(70vh,44rem)]">
+      <div data-slot="dialog-body" className={cn("px-4", className)}>
+        {children}
+      </div>
+    </ScrollArea>
+  );
+}
+
 function DialogFooter({
   className,
   showCloseButton = false,
@@ -123,6 +134,7 @@ function DialogDescription({ className, ...props }: DialogPrimitive.Description.
 }
 
 export {
+  DialogBody,
   Dialog,
   DialogClose,
   DialogContent,

@@ -11,8 +11,56 @@ export interface Me {
     phone: string | null;
     phoneVerified: boolean;
   };
-  memberships: { organisationId: string; role: Role }[];
+  memberships: {
+    organisationId: string;
+    role: Role;
+    title: string | null;
+    access: Access[];
+    venueIds: string[] | null;
+  }[];
 }
+
+export const ACCESS = [
+  "bookings",
+  "checkin",
+  "customers",
+  "venues",
+  "reports",
+  "earnings",
+  "settings",
+] as const;
+export type Access = (typeof ACCESS)[number];
+
+export const roleForAccess = (access: readonly Access[]): Role =>
+  access.includes("settings") ? "MANAGER" : "STAFF";
+
+export interface TeamMember {
+  id: string;
+  status: "ACTIVE" | "INVITED";
+  name: string | null;
+  email: string | null;
+  phone: string | null;
+  role: Role;
+  title: string | null;
+  access: Access[];
+  venueIds: string[] | null;
+  lastSignInAt: string | null;
+}
+
+export type DashboardSection =
+  | "overview"
+  | "bookings"
+  | "live"
+  | "venues"
+  | "availability"
+  | "customers"
+  | "staff"
+  | "earnings"
+  | "offers"
+  | "analytics"
+  | "reviews"
+  | "marketing"
+  | "settings";
 
 export interface Organisation {
   id: string;

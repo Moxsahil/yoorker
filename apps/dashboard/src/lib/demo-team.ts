@@ -1,85 +1,8 @@
 /**
- * SAMPLE DATA for Staff (Sprint 8), Offers (Sprint 9) and Reviews (Sprint 10). Fixed lists, so
+ * SAMPLE DATA for Offers (Sprint 9) and Reviews (Sprint 10). Fixed lists, so
  * the pages look the same on every load. Court names come from the real venue when there is one.
  */
 import { addDays } from "./period";
-import type { Role } from "./yoorker";
-
-export const ACCESS = [
-  "bookings",
-  "checkin",
-  "customers",
-  "venues",
-  "reports",
-  "earnings",
-  "settings",
-] as const;
-export type Access = (typeof ACCESS)[number];
-
-export interface TeamMember {
-  id: string;
-  name: string;
-  phone: string;
-  role: Role;
-  title: string;
-  venues: string[] | null;
-  access: Access[];
-  status: "ACTIVE" | "INVITED";
-  lastActive: string | null;
-}
-
-export const roleFor = (access: Access[]): Role =>
-  access.includes("settings") ? "MANAGER" : "STAFF";
-
-export function demoTeam(today: string, venues: string[]): TeamMember[] {
-  const first = venues[0] ?? "Green Arena";
-  return [
-    {
-      id: "m2",
-      name: "Rajesh Malik",
-      phone: "+91 98120 44871",
-      role: "MANAGER",
-      title: "Manager",
-      venues: null,
-      access: [...ACCESS],
-      status: "ACTIVE",
-      lastActive: today,
-    },
-    {
-      id: "m3",
-      name: "Sunil Kumar",
-      phone: "+91 97290 13358",
-      role: "STAFF",
-      title: "Ground staff",
-      venues: [first],
-      access: ["checkin"],
-      status: "ACTIVE",
-      lastActive: today,
-    },
-    {
-      id: "m4",
-      name: "Deepak Hooda",
-      phone: "+91 99961 70224",
-      role: "STAFF",
-      title: "Receptionist",
-      venues: [first],
-      access: ["bookings", "checkin", "customers", "earnings"],
-      status: "ACTIVE",
-      lastActive: addDays(today, -2),
-    },
-    {
-      id: "m5",
-      name: "Pooja Rathee",
-      phone: "+91 94160 58813",
-      role: "STAFF",
-      title: "Receptionist",
-      venues: venues.length > 1 ? [venues[1]!] : [first],
-      access: ["bookings", "checkin", "customers"],
-      status: "INVITED",
-      lastActive: null,
-    },
-  ];
-}
 
 export interface Offer {
   id: string;

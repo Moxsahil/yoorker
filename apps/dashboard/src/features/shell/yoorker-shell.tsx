@@ -7,7 +7,7 @@ import {
   MoonIcon,
   WalletIcon,
 } from "lucide-react";
-import { useRouter } from "@/kit/framework";
+import { Link, usePathname, useRouter } from "@/kit/framework";
 import { useTheme } from "next-themes";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
@@ -20,16 +20,46 @@ import {
 } from "@/kit/command/command-menu";
 import { NotificationBell, type BellNotification } from "@/kit/notifications/notification-bell";
 import { AppShell } from "@/kit/shell/app-shell";
-import type { ShellConfig, Workspace } from "@/kit/shell/types";
+import type { NavLink, ShellConfig, Workspace } from "@/kit/shell/types";
+import { StatusPage } from "@/kit/states/status-page";
 import { ShortcutsProvider, useShortcutsHelp } from "@/kit/shortcuts/shortcuts";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { BootSplash } from "@/components/yoorker/boot-splash";
+import { sectionFor, useAccess } from "@/lib/access";
 import { api } from "@/lib/api";
 import { demoBookings } from "@/lib/demo-data";
 import { useCurrentVenue, useMe, useVenueChoice } from "@/lib/session";
 import { todayAt } from "@/lib/yoorker";
 
-const LINKS = [...NAV.flatMap((group) => group.items), ...SECONDARY_NAV];
+function useAllowedNav() {
+  const { can } = useAccess();
+  return useMemo(() => {
+    const allowed = (link: NavLink) => {
+      const section = sectionFor(link.href);
+      return section === null || can(section);
+    };
+    const nav = NAV.map((group) => ({ ...group, items: group.items.filter(allowed) })).filter(
+      (group) => group.items.length > 0,
+    );
+    const secondary = SECONDARY_NAV.filter(allowed);
+    return { nav, secondary, links: [...nav.flatMap((group) => group.items), ...secondary] };
+  }, [can]);
+}
+
+function NoAccess() {
+  return (
+    <StatusPage
+      code="403"
+      title="You can't open this page"
+      description="Ask the owner or a manager to turn it on for you on the Staff page."
+      actions={
+        <Link href="/" className={buttonVariants()}>
+          Go to Overview
+        </Link>
+      }
+    />
+  );
+}
 
 /** SAMPLE DATA until notifications ship (Sprint 6). */
 const SAMPLE_NOTIFICATIONS: BellNotification[] = [
@@ -82,6 +112,9 @@ function Frame({ children }: { children: React.ReactNode }) {
   const { venue, venues, courts } = useCurrentVenue();
   const choose = useVenueChoice((state) => state.choose);
   const [notifications, setNotifications] = useState(SAMPLE_NOTIFICATIONS);
+  const { nav, secondary } = useAllowedNav();
+  const { can } = useAccess();
+  const section = sectionFor(usePathname());
 
   const signOut = useCallback(async () => {
     await api("/auth/logout", { method: "POST" }).catch(() => undefined);
@@ -98,6 +131,8 @@ function Frame({ children }: { children: React.ReactNode }) {
   }));
   const config: ShellConfig = {
     ...SITE,
+    nav,
+    secondary,
     workspaces:
       workspaces.length > 0
         ? workspaces
@@ -146,7 +181,7 @@ function Frame({ children }: { children: React.ReactNode }) {
         />
       }
     >
-      {children}
+      {section === null || can(section) ? children : <NoAccess />}
     </AppShell>
   );
 }
@@ -156,6 +191,7 @@ function Commands({ children }: { children: React.ReactNode }) {
   const help = useShortcutsHelp();
   const router = useRouter();
   const { venues, courts } = useCurrentVenue();
+  const { links } = useAllowedNav();
 
   const actions = useMemo<CommandAction[]>(
     () => [
@@ -224,7 +260,7 @@ function Commands({ children }: { children: React.ReactNode }) {
 
   return (
     <CommandMenuProvider
-      links={LINKS}
+      links={links}
       actions={actions}
       search={search}
       description="Jump to a page, a venue or a court, or run an action."
@@ -253,9 +289,14 @@ export function YoorkerShell({ children }: { children: React.ReactNode }) {
   if (!me.data) {
     return <BootSplash />;
   }
+  return <SignedIn>{children}</SignedIn>;
+}
+
+function SignedIn({ children }: { children: React.ReactNode }) {
+  const { links } = useAllowedNav();
   return (
     <ShortcutsProvider
-      links={LINKS}
+      links={links}
       extra={[
         { keys: ["⌘", "K"], label: "Search and actions" },
         { keys: ["⌘", "B"], label: "Collapse or expand the sidebar" },

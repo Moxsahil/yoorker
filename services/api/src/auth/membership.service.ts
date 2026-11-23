@@ -1,6 +1,6 @@
 import { ForbiddenException, Inject, Injectable, NotFoundException } from "@nestjs/common";
 import type { MeResponse } from "@yoorker/contracts";
-import type { Db, MemberRole } from "@yoorker/db";
+import type { Db, MemberRole, StaffAccess } from "@yoorker/db";
 import { DB } from "../database/database.module";
 
 @Injectable()
@@ -11,12 +11,17 @@ export class MembershipService {
     const user = await this.db
       .selectFrom("app_user")
       .select(["id", "name", "email", "phone", "phone_verified_at"])
-
       .where("id", "=", userId)
       .executeTakeFirstOrThrow();
     const memberships = await this.db
       .selectFrom("membership")
-      .select(["organisation_id as organisationId", "role"])
+      .select([
+        "organisation_id as organisationId",
+        "role",
+        "title",
+        "access",
+        "venue_ids as venueIds",
+      ])
       .where("user_id", "=", userId)
       .orderBy("created_at")
       .execute();
@@ -40,10 +45,10 @@ export class MembershipService {
     userId: string,
     organisationId: string,
     allowed: readonly MemberRole[],
-  ): Promise<MemberRole> {
+  ): Promise<Membership> {
     const membership = await this.db
       .selectFrom("membership")
-      .select("role")
+      .select(["role", "access", "venue_ids as venueIds"])
       .where("user_id", "=", userId)
       .where("organisation_id", "=", organisationId)
       .executeTakeFirst();
@@ -51,6 +56,15 @@ export class MembershipService {
     if (!allowed.includes(membership.role)) {
       throw new ForbiddenException("Your role can't do this");
     }
-    return membership.role;
+    return membership;
   }
 }
+
+export interface Membership {
+  role: MemberRole;
+  access: StaffAccess[];
+  venueIds: string[] | null;
+}
+
+export const canSeeVenue = (membership: Membership, venueId: string) =>
+  membership.venueIds === null || membership.venueIds.includes(venueId);

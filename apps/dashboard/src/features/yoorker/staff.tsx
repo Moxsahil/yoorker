@@ -11,6 +11,7 @@ import {
   UsersIcon,
   type LucideIcon,
 } from "lucide-react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -18,6 +19,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
   DialogContent,
+  DialogBody,
   DialogDescription,
   DialogFooter,
   DialogHeader,
@@ -46,14 +48,22 @@ import { PageHeader } from "@/kit/ui-patterns/page-header";
 import { Segmented } from "@/kit/ui-patterns/segmented";
 import { StatusBadge } from "@/kit/ui-patterns/status-badge";
 import { Widget, WidgetHeader } from "@/kit/widgets/widget";
-import { ACCESS, demoTeam, roleFor, type Access, type TeamMember } from "@/lib/demo-team";
+import { api } from "@/lib/api";
 import { daysBetween } from "@/lib/period";
 import { useCurrentVenue, useMe } from "@/lib/session";
 import { cn } from "@/lib/utils";
-import { dayLabel, todayAt } from "@/lib/yoorker";
+import {
+  ACCESS,
+  dayLabel,
+  roleForAccess,
+  todayAt,
+  type Access,
+  type Role,
+  type TeamMember,
+} from "@/lib/yoorker";
 
-import { AttendanceTab } from "./attendance";
-import { SampleBadge } from "./common";
+import { AttendanceTab, type AttendanceMember } from "./attendance";
+import { LiveBadge } from "./common";
 import { StaffSkeleton } from "./page-skeletons";
 
 const ACCESS_INFO: Record<Access, { label: string; detail: string; icon: LucideIcon }> = {
@@ -64,7 +74,7 @@ const ACCESS_INFO: Record<Access, { label: string; detail: string; icon: LucideI
   },
   checkin: {
     label: "Check-in",
-    detail: "Live board, mark players arrived, collect cash",
+    detail: "Live board and arrivals",
     icon: ScanLineIcon,
   },
   customers: {
@@ -103,88 +113,112 @@ const PRESETS: { title: string; access: Access[] }[] = [
 
 const initials = (name: string) =>
   name
-    .split(/\s+/)
+    .split(/[\s@.]+/)
+    .filter(Boolean)
     .map((p) => p[0])
     .join("")
     .slice(0, 2)
     .toUpperCase();
 
-const lastSeen = (date: string | null, today: string) => {
-  if (!date) return "Not signed in yet";
+const displayName = (m: TeamMember) => m.name ?? m.email ?? "Team member";
+
+const istDate = (instant: string) =>
+  new Date(instant).toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" });
+
+const lastSeen = (instant: string | null, today: string) => {
+  if (!instant) return "Not signed in yet";
+  const date = istDate(instant);
   const days = daysBetween(date, today) - 1;
   return days === 0 ? "Today" : days === 1 ? "Yesterday" : dayLabel(date);
 };
 
-const validPhone = (digits: string) => /^[6-9]\d{9}$/.test(digits);
+const validEmail = (email: string) => /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email);
+
+interface MemberInput {
+  email: string;
+  name: string;
+  title: string;
+  access: Access[];
+  venueIds: string[] | null;
+}
 
 function StaffDialog({
   member,
   open,
   onOpenChange,
   venues,
+  canAddManagers,
   onSave,
 }: {
   member: TeamMember | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  venues: string[];
-  onSave: (member: TeamMember) => void;
+  venues: { id: string; name: string }[];
+  canAddManagers: boolean;
+  onSave: (input: MemberInput) => Promise<unknown>;
 }) {
   const [name, setName] = useState(member?.name ?? "");
-  const [phone, setPhone] = useState(member?.phone.replace(/^\+91\s*/, "") ?? "");
+  const [email, setEmail] = useState(member?.email ?? "");
   const [title, setTitle] = useState(member?.title ?? "");
   const [access, setAccess] = useState<Access[]>(member?.access ?? ["bookings", "checkin"]);
-  const [all, setAll] = useState(member ? member.venues === null : true);
-  const [picked, setPicked] = useState<string[]>(member?.venues ?? []);
+  const [all, setAll] = useState(member ? member.venueIds === null : true);
+  const [picked, setPicked] = useState<string[]>(member?.venueIds ?? []);
   const [tried, setTried] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [failed, setFailed] = useState<string | null>(null);
 
-  const digits = phone.replace(/\D/g, "").replace(/^91(?=\d{10}$)/, "");
   const problem = !name.trim()
     ? "Enter their name."
-    : !validPhone(digits)
-      ? "Enter a 10-digit mobile number."
+    : !validEmail(email.trim())
+      ? "Enter the email of their Google account."
       : !title.trim()
         ? "Give them a role name, e.g. Receptionist."
         : access.length === 0
           ? "Turn on at least one thing they can open."
           : !all && picked.length === 0
             ? "Pick at least one venue."
-            : null;
+            : !canAddManagers && roleForAccess(access) === "MANAGER"
+              ? "Only the owner can give Settings access, which makes someone a manager."
+              : null;
 
   const toggle = (key: Access, on: boolean) =>
     setAccess((list) =>
       on ? ACCESS.filter((k) => k === key || list.includes(k)) : list.filter((k) => k !== key),
     );
 
-  const save = () => {
+  const save = async () => {
     setTried(true);
     if (problem) return;
-    onSave({
-      id: member?.id ?? `m${Date.now()}`,
-      name: name.trim(),
-      phone: `+91 ${digits.slice(0, 5)} ${digits.slice(5)}`,
-      role: roleFor(access),
-      title: title.trim(),
-      venues: all ? null : picked,
-      access,
-      status: member?.status ?? "INVITED",
-      lastActive: member?.lastActive ?? null,
-    });
-    onOpenChange(false);
+    setSaving(true);
+    setFailed(null);
+    try {
+      await onSave({
+        email: email.trim(),
+        name: name.trim(),
+        title: title.trim(),
+        access,
+        venueIds: all ? null : picked,
+      });
+      onOpenChange(false);
+    } catch (error) {
+      setFailed(error instanceof Error ? error.message : String(error));
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent className="sm:max-w-2xl">
         <DialogHeader>
-          <DialogTitle>{member ? `Edit ${member.name}` : "Add staff"}</DialogTitle>
+          <DialogTitle>{member ? `Edit ${displayName(member)}` : "Add staff"}</DialogTitle>
           <DialogDescription>
             {member
               ? "Changes apply the next time they open the dashboard."
-              : "They sign in with this mobile number. No password needed."}
+              : "They sign in with Google using this email. No password needed."}
           </DialogDescription>
         </DialogHeader>
-        <div className="flex max-h-[65vh] flex-col gap-5 overflow-y-auto pe-1">
+        <DialogBody className="flex flex-col gap-5">
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="flex flex-col gap-2">
               <Label htmlFor="st-name">Name</Label>
@@ -196,21 +230,18 @@ function StaffDialog({
               />
             </div>
             <div className="flex flex-col gap-2">
-              <Label htmlFor="st-phone">Mobile number</Label>
-              <div className="flex">
-                <span className="flex items-center rounded-s-md border border-e-0 bg-muted px-2.5 font-mono text-sm text-muted-foreground">
-                  +91
-                </span>
-                <Input
-                  id="st-phone"
-                  inputMode="numeric"
-                  placeholder="10-digit number"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  disabled={Boolean(member)}
-                  className="rounded-s-none font-mono tabular-nums"
-                />
-              </div>
+              {/* TODO(TURF-105): offer a mobile number instead once phone OTP sign-in is live. */}
+              <Label htmlFor="st-email">Google account email</Label>
+              <Input
+                id="st-email"
+                type="email"
+                inputMode="email"
+                autoComplete="off"
+                placeholder="name@gmail.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                disabled={Boolean(member)}
+              />
             </div>
           </div>
 
@@ -224,7 +255,9 @@ function StaffDialog({
               maxLength={30}
             />
             <div className="flex flex-wrap gap-1.5">
-              {PRESETS.map((preset) => (
+              {PRESETS.filter(
+                (preset) => canAddManagers || roleForAccess(preset.access) !== "MANAGER",
+              ).map((preset) => (
                 <button
                   key={preset.title}
                   type="button"
@@ -258,14 +291,16 @@ function StaffDialog({
               {!all && (
                 <div className="grid grid-cols-2 gap-2 ps-6">
                   {venues.map((v) => (
-                    <label key={v} className="flex items-center gap-2 text-sm">
+                    <label key={v.id} className="flex items-center gap-2 text-sm">
                       <Checkbox
-                        checked={picked.includes(v)}
+                        checked={picked.includes(v.id)}
                         onCheckedChange={(on) =>
-                          setPicked((list) => (on ? [...list, v] : list.filter((x) => x !== v)))
+                          setPicked((list) =>
+                            on ? [...list, v.id] : list.filter((x) => x !== v.id),
+                          )
                         }
                       />
-                      <span className="truncate">{v}</span>
+                      <span className="truncate">{v.name}</span>
                     </label>
                   ))}
                 </div>
@@ -275,45 +310,56 @@ function StaffDialog({
 
           <div className="flex flex-col gap-2">
             <Label>What they can open</Label>
-            <ul className="divide-y divide-border/60 rounded-lg border">
+            <div className="grid gap-2 sm:grid-cols-2">
               {ACCESS.map((key) => {
                 const info = ACCESS_INFO[key];
                 const Icon = info.icon;
                 const on = access.includes(key);
+                const locked = key === "settings" && !canAddManagers;
                 return (
-                  <li key={key}>
-                    <label className="flex cursor-pointer items-center gap-3 px-3 py-2.5">
-                      <Icon
-                        className={cn(
-                          "size-4 shrink-0",
-                          on ? "text-primary" : "text-muted-foreground",
-                        )}
-                      />
-                      <span className="flex min-w-0 flex-1 flex-col">
-                        <span className="text-sm">{info.label}</span>
-                        <span className="truncate text-xs text-muted-foreground">
-                          {info.detail}
-                        </span>
+                  <label
+                    key={key}
+                    className={cn(
+                      "flex items-center gap-3 rounded-lg border px-3 py-2.5 transition-colors",
+                      on ? "border-primary/40 bg-primary/5" : "hover:bg-muted/40",
+                      locked ? "opacity-60" : "cursor-pointer",
+                    )}
+                  >
+                    <Icon
+                      className={cn(
+                        "size-4 shrink-0",
+                        on ? "text-primary" : "text-muted-foreground",
+                      )}
+                    />
+                    <span className="flex min-w-0 flex-1 flex-col">
+                      <span className="text-sm font-medium">{info.label}</span>
+                      <span className="truncate text-xs text-muted-foreground">
+                        {locked ? "Only the owner can give this" : info.detail}
                       </span>
-                      <Switch
-                        checked={on}
-                        onCheckedChange={(v) => toggle(key, v)}
-                        aria-label={info.label}
-                      />
-                    </label>
-                  </li>
+                    </span>
+                    <Switch
+                      size="sm"
+                      checked={on}
+                      disabled={locked}
+                      onCheckedChange={(v) => toggle(key, v)}
+                      aria-label={info.label}
+                    />
+                  </label>
                 );
               })}
-            </ul>
+            </div>
           </div>
 
           {tried && problem && <p className="text-xs text-destructive">{problem}</p>}
-        </div>
+          {failed && <p className="text-xs text-destructive">{failed}</p>}
+        </DialogBody>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
-          <Button onClick={save}>{member ? "Save changes" : "Add staff"}</Button>
+          <Button onClick={save} disabled={saving}>
+            {saving ? "Saving…" : member ? "Save changes" : "Add staff"}
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -322,30 +368,56 @@ function StaffDialog({
 
 export function StaffPage() {
   const me = useMe();
-  const { venues, role: myRole, loading } = useCurrentVenue();
+  const client = useQueryClient();
+  const { venue, venues, role: myRole, loading } = useCurrentVenue();
+  const organisationId = venue?.organisationId;
   const today = todayAt();
-  const venueNames = useMemo(() => [...new Set(venues.map((v) => v.name))], [venues]);
-  const [team, setTeam] = useState<TeamMember[] | null>(null);
-  const [dialog, setDialog] = useState<{
-    open: boolean;
-    member: TeamMember | null;
-  }>({ open: false, member: null });
+  const orgVenues = useMemo(
+    () => venues.filter((v) => v.organisationId === organisationId),
+    [venues, organisationId],
+  );
+  const venueName = (id: string) => orgVenues.find((v) => v.id === id)?.name ?? "Removed venue";
+  const [dialog, setDialog] = useState<{ open: boolean; member: TeamMember | null }>({
+    open: false,
+    member: null,
+  });
   const [tab, setTab] = useState<"team" | "attendance">("team");
-  const list = team ?? demoTeam(today, venueNames);
-  const canManage = myRole === "OWNER" || myRole === "MANAGER";
+  const myId = me.data?.user.id;
 
-  const you: TeamMember = {
-    id: "me",
-    name: me.data?.user.name ?? "You",
-    phone: (me.data?.user.phone ?? "").replace(/^\+91(\d{5})(\d{5})$/, "+91 $1 $2"),
-    role: myRole ?? "OWNER",
-    title: myRole === "MANAGER" ? "Manager" : "Owner",
-    venues: null,
-    access: [...ACCESS],
-    status: "ACTIVE",
-    lastActive: today,
-  };
-  const rows = [you, ...list];
+  const teamKey = ["team", organisationId];
+  const team = useQuery({
+    queryKey: teamKey,
+    queryFn: () => api<TeamMember[]>(`/organisations/${organisationId}/members`),
+    enabled: Boolean(organisationId),
+  });
+  const refresh = () => client.invalidateQueries({ queryKey: teamKey });
+  const members = team.data ?? [];
+
+  const canChange = (m: TeamMember) =>
+    m.id !== myId && m.role !== "OWNER" && (myRole === "OWNER" || m.role !== "MANAGER");
+
+  const update = useMutation({
+    mutationFn: ({ id, changes }: { id: string; changes: Partial<MemberInput> }) =>
+      api<TeamMember>(`/organisations/${organisationId}/members/${id}`, {
+        method: "PATCH",
+        body: changes,
+      }),
+    onSuccess: refresh,
+  });
+  const remove = useMutation({
+    mutationFn: (m: TeamMember) =>
+      api(`/organisations/${organisationId}/members/${m.id}`, { method: "DELETE" }),
+    onSuccess: (_, m) => {
+      refresh();
+      toast.add({
+        type: "success",
+        title: m.status === "INVITED" ? "Invite cancelled" : `${displayName(m)} removed`,
+        description: m.status === "INVITED" ? undefined : "They can no longer open this dashboard.",
+      });
+    },
+    onError: (error) =>
+      toast.add({ type: "error", title: "Couldn't remove", description: error.message }),
+  });
 
   const setAccessFor = (m: TeamMember, key: Access, on: boolean) => {
     const access = on
@@ -359,28 +431,44 @@ export function StaffPage() {
       });
       return;
     }
-    setTeam(list.map((x) => (x.id === m.id ? { ...x, access, role: roleFor(access) } : x)));
-    toast.add({
-      type: "success",
-      title: `${ACCESS_INFO[key].label} ${on ? "on" : "off"} for ${m.name}`,
-    });
+    update.mutate(
+      { id: m.id, changes: { access } },
+      {
+        onSuccess: () =>
+          toast.add({
+            type: "success",
+            title: `${ACCESS_INFO[key].label} ${on ? "on" : "off"} for ${displayName(m)}`,
+          }),
+        onError: (error) =>
+          toast.add({ type: "error", title: "Couldn't change access", description: error.message }),
+      },
+    );
   };
 
-  if (loading) return <StaffSkeleton />;
+  const attendanceTeam: AttendanceMember[] = members
+    .filter((m) => m.status === "ACTIVE" && m.role !== "OWNER")
+    .map((m) => ({
+      id: m.id,
+      name: displayName(m),
+      phone: m.phone ?? m.email ?? "",
+      role: m.role,
+      title: m.title ?? ROLE_NAME[m.role],
+      lastActive: m.lastSignInAt ? istDate(m.lastSignInAt) : null,
+    }));
+
+  if (loading || team.isLoading) return <StaffSkeleton />;
 
   return (
     <div className="flex flex-col gap-6">
       <PageHeader
         title="Staff"
         description="Your team, what each person can open, and their attendance for salary."
-        meta={<SampleBadge sprint="Sprint 8" />}
+        meta={<LiveBadge />}
         actions={
-          canManage && (
-            <Button onClick={() => setDialog({ open: true, member: null })}>
-              <UserPlusIcon data-icon="inline-start" />
-              Add staff
-            </Button>
-          )
+          <Button onClick={() => setDialog({ open: true, member: null })}>
+            <UserPlusIcon data-icon="inline-start" />
+            Add staff
+          </Button>
         }
       />
 
@@ -396,7 +484,7 @@ export function StaffPage() {
       />
 
       {tab === "attendance" ? (
-        <AttendanceTab team={list.filter((m) => m.status === "ACTIVE")} today={today} />
+        <AttendanceTab team={attendanceTeam} today={today} />
       ) : (
         <>
           <Widget>
@@ -405,7 +493,7 @@ export function StaffPage() {
                 <span className="flex items-center gap-2">
                   Team
                   <span className="text-sm font-normal text-muted-foreground tabular-nums">
-                    {rows.length}
+                    {members.length}
                   </span>
                 </span>
               }
@@ -426,8 +514,9 @@ export function StaffPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {rows.map((m) => {
-                    const isYou = m.id === "me";
+                  {members.map((m) => {
+                    const isYou = m.id === myId;
+                    const name = displayName(m);
                     return (
                       <TableRow key={m.id} className="border-border/60 hover:bg-muted/40">
                         <TableCell>
@@ -436,31 +525,35 @@ export function StaffPage() {
                               className="flex size-8 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-medium text-muted-foreground"
                               aria-hidden
                             >
-                              {initials(m.name)}
+                              {initials(name)}
                             </span>
                             <span className="flex min-w-0 flex-col">
                               <span className="truncate font-medium">
-                                {m.name}
+                                {name}
                                 {isYou && (
                                   <span className="font-normal text-muted-foreground"> (you)</span>
                                 )}
                               </span>
-                              <span className="truncate font-mono text-xs text-muted-foreground tabular-nums">
-                                {m.phone}
+                              <span className="truncate text-xs text-muted-foreground">
+                                {m.email ?? m.phone}
                               </span>
                             </span>
                           </span>
                         </TableCell>
                         <TableCell>
-                          <span className="block truncate text-sm">{m.title}</span>
-                        </TableCell>
-                        <TableCell>
                           <span className="block truncate text-sm">
-                            {m.venues === null ? "All venues" : m.venues.join(", ")}
+                            {m.role === "OWNER" ? "Owner" : (m.title ?? ROLE_NAME[m.role])}
                           </span>
                         </TableCell>
                         <TableCell>
-                          {isYou ? (
+                          <span className="block truncate text-sm">
+                            {m.venueIds === null
+                              ? "All venues"
+                              : m.venueIds.map(venueName).join(", ")}
+                          </span>
+                        </TableCell>
+                        <TableCell>
+                          {m.role === "OWNER" ? (
                             <span className="text-sm text-muted-foreground">Everything</span>
                           ) : (
                             <span className="flex flex-wrap gap-1">
@@ -477,20 +570,20 @@ export function StaffPage() {
                         </TableCell>
                         <TableCell>
                           {m.status === "INVITED" ? (
-                            <StatusBadge tone="warning">Not signed in</StatusBadge>
+                            <StatusBadge tone="warning">Invited</StatusBadge>
                           ) : (
-                            <span className="text-sm">{lastSeen(m.lastActive, today)}</span>
+                            <span className="text-sm">{lastSeen(m.lastSignInAt, today)}</span>
                           )}
                         </TableCell>
                         <TableCell className="text-end">
-                          {canManage && !isYou && (
+                          {canChange(m) && (
                             <DropdownMenu>
                               <DropdownMenuTrigger
                                 render={
                                   <Button
                                     variant="ghost"
                                     size="icon-sm"
-                                    aria-label={`Options for ${m.name}`}
+                                    aria-label={`Options for ${name}`}
                                   />
                                 }
                               >
@@ -502,31 +595,12 @@ export function StaffPage() {
                                 >
                                   Edit role and access
                                 </DropdownMenuItem>
-                                {m.status === "INVITED" && (
-                                  <DropdownMenuItem
-                                    onClick={() =>
-                                      toast.add({
-                                        type: "success",
-                                        title: `Sign-in link sent again to ${m.phone}`,
-                                      })
-                                    }
-                                  >
-                                    Send sign-in SMS again
-                                  </DropdownMenuItem>
-                                )}
                                 <DropdownMenuSeparator />
                                 <DropdownMenuItem
                                   variant="destructive"
-                                  onClick={() => {
-                                    setTeam(list.filter((x) => x.id !== m.id));
-                                    toast.add({
-                                      type: "success",
-                                      title: `${m.name} removed`,
-                                      description: "They can no longer open this dashboard.",
-                                    });
-                                  }}
+                                  onClick={() => remove.mutate(m)}
                                 >
-                                  Remove from team
+                                  {m.status === "INVITED" ? "Cancel invite" : "Remove from team"}
                                 </DropdownMenuItem>
                               </DropdownMenuContent>
                             </DropdownMenu>
@@ -569,24 +643,34 @@ export function StaffPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {list.map((m) => (
-                    <TableRow key={m.id} className="border-border/60 hover:bg-muted/40">
-                      <TableCell>
-                        <span className="block truncate text-sm font-medium">{m.name}</span>
-                        <span className="text-xs text-muted-foreground">{m.title}</span>
-                      </TableCell>
-                      {ACCESS.map((key) => (
-                        <TableCell key={key} className="text-center">
-                          <Switch
-                            checked={m.access.includes(key)}
-                            disabled={!canManage}
-                            onCheckedChange={(on) => setAccessFor(m, key, on)}
-                            aria-label={`${ACCESS_INFO[key].label} for ${m.name}`}
-                          />
+                  {members
+                    .filter((m) => m.role !== "OWNER")
+                    .map((m) => (
+                      <TableRow key={m.id} className="border-border/60 hover:bg-muted/40">
+                        <TableCell>
+                          <span className="block truncate text-sm font-medium">
+                            {displayName(m)}
+                          </span>
+                          <span className="text-xs text-muted-foreground">
+                            {m.title ?? ROLE_NAME[m.role]}
+                          </span>
                         </TableCell>
-                      ))}
-                    </TableRow>
-                  ))}
+                        {ACCESS.map((key) => (
+                          <TableCell key={key} className="text-center">
+                            <Switch
+                              checked={m.access.includes(key)}
+                              disabled={
+                                !canChange(m) ||
+                                (key === "settings" && myRole !== "OWNER") ||
+                                update.isPending
+                              }
+                              onCheckedChange={(on) => setAccessFor(m, key, on)}
+                              aria-label={`${ACCESS_INFO[key].label} for ${displayName(m)}`}
+                            />
+                          </TableCell>
+                        ))}
+                      </TableRow>
+                    ))}
                 </TableBody>
               </Table>
             </div>
@@ -599,19 +683,34 @@ export function StaffPage() {
         member={dialog.member}
         open={dialog.open}
         onOpenChange={(open) => setDialog((d) => ({ ...d, open }))}
-        venues={venueNames}
-        onSave={(saved) => {
-          const exists = list.some((x) => x.id === saved.id);
-          setTeam(exists ? list.map((x) => (x.id === saved.id ? saved : x)) : [...list, saved]);
+        venues={orgVenues}
+        canAddManagers={myRole === "OWNER"}
+        onSave={async (input) => {
+          const editing = dialog.member;
+          if (editing) {
+            await update.mutateAsync({
+              id: editing.id,
+              changes: { title: input.title, access: input.access, venueIds: input.venueIds },
+            });
+            toast.add({ type: "success", title: `${displayName(editing)} updated` });
+            return;
+          }
+          const added = await api<TeamMember>(`/organisations/${organisationId}/members`, {
+            body: input,
+          });
+          await refresh();
           toast.add({
             type: "success",
-            title: exists ? `${saved.name} updated` : `${saved.name} added`,
-            description: exists
-              ? undefined
-              : `An SMS with a sign-in link is on its way to ${saved.phone}.`,
+            title: `${input.name} added`,
+            description:
+              added.status === "ACTIVE"
+                ? "They already use Yoorker, so they can open the dashboard now."
+                : `They join when they sign in with Google as ${input.email}.`,
           });
         }}
       />
     </div>
   );
 }
+
+const ROLE_NAME: Record<Role, string> = { OWNER: "Owner", MANAGER: "Manager", STAFF: "Staff" };

@@ -1,4 +1,10 @@
-import { ConflictException, Inject, Injectable, NotFoundException } from "@nestjs/common";
+import {
+  ConflictException,
+  ForbiddenException,
+  Inject,
+  Injectable,
+  NotFoundException,
+} from "@nestjs/common";
 import type {
   AuditEntry,
   CityInput,
@@ -14,7 +20,7 @@ import type {
 import { point, type Database, type Db, type MemberRole } from "@yoorker/db";
 import { sql, type Kysely } from "kysely";
 import { AuditService } from "../audit/audit.service";
-import { MembershipService } from "../auth/membership.service";
+import { canSeeVenue, MembershipService } from "../auth/membership.service";
 import type { Actor } from "../common/actor";
 import { isUniqueViolation } from "../common/pg-errors";
 import { DB } from "../database/database.module";
@@ -173,16 +179,20 @@ export class VenuesService {
   }
 
   async listVenues(actor: Actor, organisationId: string): Promise<Venue[]> {
-    await this.memberships.requireRole(actor.userId, organisationId, ANY_MEMBER);
+    const membership = await this.memberships.requireRole(actor.userId, organisationId, ANY_MEMBER);
     const rows = await selectVenues(this.db)
       .where("venue.organisation_id", "=", organisationId)
+      .$if(membership.venueIds !== null, (q) => q.where("venue.id", "in", membership.venueIds!))
       .orderBy("venue.name")
       .execute();
     return rows.map(toVenue);
   }
 
   async createVenue(actor: Actor, organisationId: string, input: CreateVenue): Promise<Venue> {
-    await this.memberships.requireRole(actor.userId, organisationId, MANAGERS);
+    const membership = await this.memberships.requireRole(actor.userId, organisationId, MANAGERS);
+    if (membership.venueIds !== null) {
+      throw new ForbiddenException("Only someone who can open every venue can add one");
+    }
     try {
       return await this.db.transaction().execute(async (trx) => {
         const { id } = await trx
@@ -224,10 +234,13 @@ export class VenuesService {
   async getVenue(actor: Actor, venueId: string, roles = ANY_MEMBER): Promise<Venue> {
     const row = await selectVenues(this.db).where("venue.id", "=", venueId).executeTakeFirst();
     if (!row) throw new NotFoundException("Venue not found");
-    await this.memberships.requireRole(actor.userId, row.organisationId, roles).catch((err) => {
-      // A non-member must not learn the venue exists.
-      throw err instanceof NotFoundException ? new NotFoundException("Venue not found") : err;
-    });
+    const membership = await this.memberships
+      .requireRole(actor.userId, row.organisationId, roles)
+      .catch((err) => {
+        // A non-member must not learn the venue exists.
+        throw err instanceof NotFoundException ? new NotFoundException("Venue not found") : err;
+      });
+    if (!canSeeVenue(membership, venueId)) throw new NotFoundException("Venue not found");
     return toVenue(row);
   }
 

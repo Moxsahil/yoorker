@@ -22,6 +22,17 @@ describe("loadEnv", () => {
     ).toBe(true);
   });
 
+  it("switches every dashboard section on by default, or only the ones listed", () => {
+    expect(loadEnv(base).ENABLED_SECTIONS).toHaveLength(13);
+    expect(loadEnv({ ...base, ENABLED_SECTIONS: " overview, staff ," }).ENABLED_SECTIONS).toEqual([
+      "overview",
+      "staff",
+    ]);
+    expect(() => loadEnv({ ...base, ENABLED_SECTIONS: "overview,payroll" })).toThrow(
+      /ENABLED_SECTIONS/,
+    );
+  });
+
   it("accepts exact origins in CORS_ORIGINS and rejects anything else", () => {
     expect(
       loadEnv({

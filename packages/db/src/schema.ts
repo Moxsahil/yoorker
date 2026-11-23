@@ -11,6 +11,17 @@ type JsonSnapshot = ColumnType<unknown, object | null | undefined, never>;
 export const MEMBER_ROLES = ["OWNER", "MANAGER", "STAFF"] as const;
 export type MemberRole = (typeof MEMBER_ROLES)[number];
 
+export const STAFF_ACCESS = [
+  "bookings",
+  "checkin",
+  "customers",
+  "venues",
+  "reports",
+  "earnings",
+  "settings",
+] as const;
+export type StaffAccess = (typeof STAFF_ACCESS)[number];
+
 export const SPORTS = [
   "FOOTBALL",
   "CRICKET",
@@ -62,7 +73,25 @@ export interface MembershipTable {
   organisation_id: string;
   user_id: string;
   role: MemberRole;
+  title: Nullable<string>;
+  access: Generated<StaffAccess[]>;
+  venue_ids: Nullable<string[]>;
   created_at: CreatedAt;
+  updated_at: UpdatedAt;
+}
+
+export interface MemberInviteTable {
+  id: Generated<string>;
+  organisation_id: string;
+  email: string;
+  name: string;
+  role: MemberRole;
+  title: string;
+  access: StaffAccess[];
+  venue_ids: Nullable<string[]>;
+  invited_by: Nullable<string>;
+  created_at: CreatedAt;
+  updated_at: UpdatedAt;
 }
 
 export interface CityTable {
@@ -219,6 +248,7 @@ export interface Database {
   app_user: AppUserTable;
   organisation: OrganisationTable;
   membership: MembershipTable;
+  member_invite: MemberInviteTable;
   city: CityTable;
   venue: VenueTable;
   venue_photo: VenuePhotoTable;

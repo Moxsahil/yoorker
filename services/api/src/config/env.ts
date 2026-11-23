@@ -1,3 +1,4 @@
+import { dashboardSectionSchema } from "@yoorker/contracts";
 import { z } from "zod";
 
 function isOrigin(value: string): boolean {
@@ -57,6 +58,18 @@ const envSchema = z
           }),
         ),
       ),
+    ENABLED_SECTIONS: z
+      .string()
+      .default("all")
+      .transform((raw) =>
+        raw.trim() === "all"
+          ? dashboardSectionSchema.options
+          : raw
+              .split(",")
+              .map((section) => section.trim())
+              .filter((section) => section.length > 0),
+      )
+      .pipe(z.array(dashboardSectionSchema)),
     RENDER_GIT_COMMIT: z.string().optional(),
     SENTRY_DSN: optional(z.url()),
     SENTRY_ENVIRONMENT: z

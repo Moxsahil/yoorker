@@ -40,6 +40,17 @@ export type UpdateProfile = z.infer<typeof updateProfileSchema>;
 
 export const memberRoleSchema = z.enum(["OWNER", "MANAGER", "STAFF"]);
 
+export const staffAccessSchema = z.enum([
+  "bookings",
+  "checkin",
+  "customers",
+  "venues",
+  "reports",
+  "earnings",
+  "settings",
+]);
+export type StaffAccess = z.infer<typeof staffAccessSchema>;
+
 export const meResponseSchema = z.object({
   user: z.object({
     id: z.uuid(),
@@ -48,6 +59,14 @@ export const meResponseSchema = z.object({
     phone: z.string().nullable(),
     phoneVerified: z.boolean(),
   }),
-  memberships: z.array(z.object({ organisationId: z.uuid(), role: memberRoleSchema })),
+  memberships: z.array(
+    z.object({
+      organisationId: z.uuid(),
+      role: memberRoleSchema,
+      title: z.string().nullable(),
+      access: z.array(staffAccessSchema),
+      venueIds: z.array(z.uuid()).nullable(),
+    }),
+  ),
 });
 export type MeResponse = z.infer<typeof meResponseSchema>;

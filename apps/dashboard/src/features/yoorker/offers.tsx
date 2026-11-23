@@ -6,6 +6,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
   DialogContent,
+  DialogBody,
   DialogDescription,
   DialogFooter,
   DialogHeader,
@@ -135,7 +136,7 @@ function OfferDialog({
             A discount players get at checkout, on the days and hours you choose.
           </DialogDescription>
         </DialogHeader>
-        <div className="flex max-h-[65vh] flex-col gap-5 overflow-y-auto pe-1">
+        <DialogBody className="flex flex-col gap-5">
           <div className="flex flex-col gap-2">
             <Label htmlFor="of-name">Name</Label>
             <Input
@@ -322,7 +323,7 @@ function OfferDialog({
           </div>
 
           {tried && problem && <p className="text-xs text-destructive">{problem}</p>}
-        </div>
+        </DialogBody>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancel

@@ -57,7 +57,12 @@ export interface Stat {
 
 export function StatCards({ stats }: { stats: Stat[] }) {
   return (
-    <div className="grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-5">
+    <div
+      className={cn(
+        "grid grid-cols-2 gap-4 md:grid-cols-3",
+        stats.length === 5 ? "xl:grid-cols-5" : "xl:grid-cols-4",
+      )}
+    >
       {stats.map((stat) => (
         <div key={stat.label} className="flex flex-col gap-2 rounded-xl border bg-card p-4">
           <div className="flex items-center justify-between text-sm text-muted-foreground">
