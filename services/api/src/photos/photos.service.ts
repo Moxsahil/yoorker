@@ -140,6 +140,34 @@ export class PhotosService {
     }
   }
 
+  async reorderPhotos(actor: Actor, venueId: string, photoIds: string[]): Promise<VenuePhoto[]> {
+    const venue = await this.venues.getVenue(actor, venueId, MANAGERS);
+    await this.db.transaction().execute(async (trx) => {
+      await trx.selectFrom("venue").select("id").where("id", "=", venueId).forUpdate().execute();
+      const current = await trx
+        .selectFrom("venue_photo")
+        .select(["id", "position"])
+        .where("venue_id", "=", venueId)
+        .orderBy("position")
+        .execute();
+      const same =
+        current.length === photoIds.length && current.every((row) => photoIds.includes(row.id));
+      if (!same) throw new ConflictException("The photos changed. Refresh and try again.");
+      for (const [position, id] of photoIds.entries()) {
+        await trx.updateTable("venue_photo").set({ position }).where("id", "=", id).execute();
+      }
+      await this.audit.record(trx, actor, {
+        organisationId: venue.organisationId,
+        action: "venue_photo.reorder",
+        entityType: "venue",
+        entityId: venueId,
+        before: { photoIds: current.map((row) => row.id) },
+        after: { photoIds },
+      });
+    });
+    return this.listPhotos(actor, venueId);
+  }
+
   async removePhoto(actor: Actor, venueId: string, photoId: string): Promise<void> {
     const venue = await this.venues.getVenue(actor, venueId, MANAGERS);
     const removed = await this.db.transaction().execute(async (trx) => {

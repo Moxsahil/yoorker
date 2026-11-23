@@ -33,3 +33,12 @@ export const venuePhotoSchema = z.object({
   createdAt: z.iso.datetime({ offset: true }),
 });
 export type VenuePhoto = z.infer<typeof venuePhotoSchema>;
+
+export const reorderPhotosSchema = z.object({
+  photoIds: z
+    .array(z.uuid())
+    .min(1)
+    .max(MAX_PHOTOS_PER_VENUE)
+    .refine((ids) => new Set(ids).size === ids.length, "Each photo can appear only once"),
+});
+export type ReorderPhotos = z.infer<typeof reorderPhotosSchema>;

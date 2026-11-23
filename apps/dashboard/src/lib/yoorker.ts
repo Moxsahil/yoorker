@@ -68,6 +68,14 @@ export interface Organisation {
   role: Role;
 }
 
+export interface VenuePhoto {
+  id: string;
+  venueId: string;
+  url: string;
+  position: number;
+  createdAt: string;
+}
+
 export interface Venue {
   id: string;
   organisationId: string;

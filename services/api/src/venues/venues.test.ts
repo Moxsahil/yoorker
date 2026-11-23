@@ -303,3 +303,78 @@ describe("cities (TURF-108)", () => {
       .expect(400);
   });
 });
+
+describe("deleting a venue (TURF-103)", () => {
+  let doomedId: string;
+  let courtId: string;
+
+  beforeAll(async () => {
+    const res = await t
+      .http()
+      .post(`/organisations/${organisationId}/venues`)
+      .set("Cookie", owner.cookie)
+      .send({ ...sector57, slug: "closing-down-turf", name: "Closing Down Turf" })
+      .expect(201);
+    doomedId = venueSchema.parse(res.body).id;
+    const court = await t
+      .http()
+      .post(`/venues/${doomedId}/courts`)
+      .set("Cookie", owner.cookie)
+      .send({ name: "Box A", sports: ["FOOTBALL"], surface: "ARTIFICIAL_TURF", capacity: 10 })
+      .expect(201);
+    courtId = courtSchema.parse(court.body).id;
+  });
+
+  it("lets only the owner delete a venue", async () => {
+    await t.http().delete(`/venues/${doomedId}`).set("Cookie", staff.cookie).expect(403);
+    await t.http().delete(`/venues/${doomedId}`).set("Cookie", outsider.cookie).expect(404);
+    await t.http().delete(`/venues/${doomedId}`).set("Cookie", owner.cookie).expect(204);
+  });
+
+  it("hides the venue and its courts everywhere, but keeps the data", async () => {
+    const list = await t
+      .http()
+      .get(`/organisations/${organisationId}/venues`)
+      .set("Cookie", owner.cookie)
+      .expect(200);
+    expect(
+      venueSchema
+        .array()
+        .parse(list.body)
+        .some((v) => v.id === doomedId),
+    ).toBe(false);
+    await t.http().get(`/venues/${doomedId}`).set("Cookie", owner.cookie).expect(404);
+    await t.http().get(`/courts/${courtId}/schedule`).set("Cookie", owner.cookie).expect(404);
+    await t.http().delete(`/venues/${doomedId}`).set("Cookie", owner.cookie).expect(404);
+
+    const row = await t.db
+      .selectFrom("venue")
+      .select(["is_active", "deleted_at"])
+      .where("id", "=", doomedId)
+      .executeTakeFirstOrThrow();
+    expect(row.is_active).toBe(false);
+    expect(row.deleted_at).not.toBeNull();
+  });
+
+  it("keeps the venue's link reserved", async () => {
+    await t
+      .http()
+      .post(`/organisations/${organisationId}/venues`)
+      .set("Cookie", owner.cookie)
+      .send({ ...sector57, slug: "closing-down-turf" })
+      .expect(409);
+  });
+
+  it("records the delete in the audit log", async () => {
+    const res = await t
+      .http()
+      .get(`/organisations/${organisationId}/audit-log`)
+      .set("Cookie", owner.cookie)
+      .expect(200);
+    const entry = auditEntrySchema
+      .array()
+      .parse(res.body)
+      .find((e) => e.entityId === doomedId && e.action === "venue.delete");
+    expect(entry).toBeDefined();
+  });
+});

@@ -37,34 +37,10 @@ export function useAllVenues() {
       queryFn: () => api<Venue[]>(`/organisations/${org.id}/venues`),
     })),
   });
-  const removed = useRemovedVenues((state) => state.ids);
-  const venues = useMemo(
-    () =>
-      results.flatMap((result) => result.data ?? []).filter((venue) => !removed.includes(venue.id)),
-    [results, removed],
-  );
+  const venues = useMemo(() => results.flatMap((result) => result.data ?? []), [results]);
   const loading = orgs.isLoading || results.some((result) => result.isLoading);
   return { organisations: orgs.data ?? [], venues, loading };
 }
-
-/**
- * Venues deleted in this demo. The API has no delete yet, so they are hidden on this device
- * until it does (see the Delete venue dialog).
- */
-export const useRemovedVenues = create<{
-  ids: string[];
-  remove: (id: string) => void;
-  restoreAll: () => void;
-}>()(
-  persist(
-    (set) => ({
-      ids: [],
-      remove: (id) => set((state) => ({ ids: [...state.ids, id] })),
-      restoreAll: () => set({ ids: [] }),
-    }),
-    { name: "yoorker-removed-venues" },
-  ),
-);
 
 export const useVenueChoice = create<{
   venueId: string | null;

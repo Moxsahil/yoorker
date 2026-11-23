@@ -7,13 +7,16 @@ import {
   Param,
   ParseUUIDPipe,
   Post,
+  Put,
 } from "@nestjs/common";
 import {
   addVenuePhotoSchema,
   photoUploadRequestSchema,
+  reorderPhotosSchema,
   type AddVenuePhoto,
   type PhotoUpload,
   type PhotoUploadRequest,
+  type ReorderPhotos,
   type VenuePhoto,
 } from "@yoorker/contracts";
 import { CurrentActor, type Actor } from "../common/actor";
@@ -47,6 +50,15 @@ export class PhotosController {
     @Body(new ZodValidationPipe(addVenuePhotoSchema)) body: AddVenuePhoto,
   ): Promise<VenuePhoto> {
     return this.photos.addPhoto(actor, venueId, body);
+  }
+
+  @Put("order")
+  reorder(
+    @CurrentActor() actor: Actor,
+    @Param("venueId", id) venueId: string,
+    @Body(new ZodValidationPipe(reorderPhotosSchema)) body: ReorderPhotos,
+  ): Promise<VenuePhoto[]> {
+    return this.photos.reorderPhotos(actor, venueId, body.photoIds);
   }
 
   @Delete(":photoId")

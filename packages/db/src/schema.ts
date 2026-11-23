@@ -118,6 +118,7 @@ export interface VenueTable {
   amenities: Generated<string[]>;
   rules: Generated<string[]>;
   is_active: Generated<boolean>;
+  deleted_at: Nullable<Date>;
   created_at: CreatedAt;
   updated_at: UpdatedAt;
 }

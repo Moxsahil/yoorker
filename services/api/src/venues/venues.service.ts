@@ -27,6 +27,7 @@ import { DB } from "../database/database.module";
 
 const ANY_MEMBER: readonly MemberRole[] = ["OWNER", "MANAGER", "STAFF"];
 const MANAGERS: readonly MemberRole[] = ["OWNER", "MANAGER"];
+const OWNER: readonly MemberRole[] = ["OWNER"];
 
 export interface CourtAccess {
   id: string;
@@ -57,7 +58,8 @@ function selectVenues(db: Kysely<Database>) {
       "city.state as cityState",
       sql<number>`ST_Y(venue.location::geometry)`.as("lat"),
       sql<number>`ST_X(venue.location::geometry)`.as("lng"),
-    ]);
+    ])
+    .where("venue.deleted_at", "is", null);
 }
 
 function selectCourts(db: Kysely<Database>) {
@@ -285,6 +287,25 @@ export class VenuesService {
       }
       throw err;
     }
+  }
+
+  // TODO(TURF-302): refuse while the venue has upcoming bookings, once bookings exist.
+  async deleteVenue(actor: Actor, venueId: string): Promise<void> {
+    const before = await this.getVenue(actor, venueId, OWNER);
+    await this.db.transaction().execute(async (trx) => {
+      await trx
+        .updateTable("venue")
+        .set({ deleted_at: sql<Date>`now()`, is_active: false })
+        .where("id", "=", venueId)
+        .execute();
+      await this.audit.record(trx, actor, {
+        organisationId: before.organisationId,
+        action: "venue.delete",
+        entityType: "venue",
+        entityId: venueId,
+        before,
+      });
+    });
   }
 
   async getCourtAccess(

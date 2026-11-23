@@ -1,4 +1,14 @@
-import { Body, Controller, Get, Param, ParseUUIDPipe, Patch, Post } from "@nestjs/common";
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  HttpCode,
+  Param,
+  ParseUUIDPipe,
+  Patch,
+  Post,
+} from "@nestjs/common";
 import {
   createCourtSchema,
   createOrganisationSchema,
@@ -80,6 +90,12 @@ export class VenuesController {
     @Body(new ZodValidationPipe(updateVenueSchema)) body: UpdateVenue,
   ): Promise<Venue> {
     return this.venues.updateVenue(actor, venueId, body);
+  }
+
+  @Delete(":venueId")
+  @HttpCode(204)
+  remove(@CurrentActor() actor: Actor, @Param("venueId", id) venueId: string): Promise<void> {
+    return this.venues.deleteVenue(actor, venueId);
   }
 
   @Get(":venueId/courts")
