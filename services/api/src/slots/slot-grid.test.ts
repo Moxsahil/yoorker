@@ -38,6 +38,7 @@ const calendar: CourtCalendar = {
       reason: "MAINTENANCE",
     },
   ],
+  bookings: [],
 };
 
 const LONG_AGO = new Date("2026-01-01T00:00:00Z");
@@ -65,6 +66,32 @@ describe("slotsForDay", () => {
     expect(at["08:00"]!.status).toBe("BLOCKED"); // a block wins over past
     expect(at["10:30"]!.status).toBe("FREE"); // starts right now
     expect(at["11:00"]!.status).toBe("FREE");
+  });
+
+  it("shows held and booked time, with a confirmed booking winning over a hold (TURF-302)", () => {
+    const busy: CourtCalendar = {
+      ...calendar,
+      bookings: [
+        {
+          startsAt: new Date("2026-12-21T07:30:00Z"), // Mon 13:00 IST
+          endsAt: new Date("2026-12-21T08:30:00Z"), // Mon 14:00 IST
+          status: "HELD",
+        },
+        {
+          startsAt: new Date("2026-12-21T08:30:00Z"), // Mon 14:00 IST
+          endsAt: new Date("2026-12-21T09:30:00Z"), // Mon 15:00 IST
+          status: "CONFIRMED",
+        },
+      ],
+    };
+    const at = byStart(slotsForDay(busy, MONDAY, 60, null, LONG_AGO));
+    expect(at["12:00"]!.status).toBe("FREE");
+    expect(at["12:30"]!.status).toBe("HELD"); // 12:30-13:30 runs into the hold
+    expect(at["13:30"]!.status).toBe("BOOKED"); // touches both; booked wins
+    expect(at["15:00"]!.status).toBe("FREE");
+    const cells = Object.fromEntries(gridForDay(busy, MONDAY, LONG_AGO).map((c) => [c.start, c]));
+    expect(cells["13:00"]!.status).toBe("HELD");
+    expect(cells["14:30"]!.status).toBe("BOOKED");
   });
 
   it("runs Saturday night past midnight and uses the package price when there is one", () => {

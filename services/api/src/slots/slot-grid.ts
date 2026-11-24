@@ -1,4 +1,4 @@
-import type { BlockReason, GridCell, Slot } from "@yoorker/contracts";
+import type { BlockReason, GridCell, Slot, SlotStatus } from "@yoorker/contracts";
 import { addDays, quote, type PriceBook } from "../pricing/pricing";
 import { isoWeekday, localToUtc } from "../schedule/local-time";
 import { formatClock, startsForDay, type StoredWindow } from "../schedule/schedule-rules";
@@ -10,20 +10,34 @@ export interface CourtBlock {
   reason: BlockReason;
 }
 
+export interface CourtBooking {
+  startsAt: Date;
+  endsAt: Date;
+  status: "HELD" | "CONFIRMED";
+}
+
 export interface CourtCalendar {
   timezone: string;
   startStepMinutes: number;
   windows: StoredWindow[];
   book: PriceBook;
   blocks: CourtBlock[];
+  bookings: CourtBooking[];
 }
 
+const overlaps = (a: { startsAt: Date; endsAt: Date }, startsAt: Date, endsAt: Date) =>
+  a.startsAt.getTime() < endsAt.getTime() && startsAt.getTime() < a.endsAt.getTime();
+
 function blockAt(calendar: CourtCalendar, startsAt: Date, endsAt: Date): CourtBlock | null {
-  return (
-    calendar.blocks.find(
-      (b) => b.startsAt.getTime() < endsAt.getTime() && startsAt.getTime() < b.endsAt.getTime(),
-    ) ?? null
-  );
+  return calendar.blocks.find((b) => overlaps(b, startsAt, endsAt)) ?? null;
+}
+
+function statusAt(calendar: CourtCalendar, startsAt: Date, endsAt: Date, now: Date): SlotStatus {
+  if (blockAt(calendar, startsAt, endsAt)) return "BLOCKED";
+  const taken = calendar.bookings.filter((b) => overlaps(b, startsAt, endsAt));
+  if (taken.some((b) => b.status === "CONFIRMED")) return "BOOKED";
+  if (taken.length > 0) return "HELD";
+  return startsAt.getTime() < now.getTime() ? "PAST" : "FREE";
 }
 
 export function slotsForDay(
@@ -35,11 +49,7 @@ export function slotsForDay(
 ): Slot[] {
   return startsForDay(calendar, date, minutes).map(({ startMinute, startsAt, endsAt }) => {
     const price = quote(calendar.book, { date, startMinute, minutes, packagePricePaise });
-    const status = blockAt(calendar, startsAt, endsAt)
-      ? "BLOCKED"
-      : startsAt.getTime() < now.getTime()
-        ? "PAST"
-        : "FREE";
+    const status = statusAt(calendar, startsAt, endsAt, now);
     return {
       startsAt: startsAt.toISOString(),
       endsAt: endsAt.toISOString(),
@@ -71,7 +81,7 @@ export function gridForDay(calendar: CourtCalendar, date: string, now: Date): Gr
         start: formatClock(t),
         startsAt: startsAt.toISOString(),
         endsAt: endsAt.toISOString(),
-        status: block ? "BLOCKED" : startsAt.getTime() < now.getTime() ? "PAST" : "FREE",
+        status: statusAt(calendar, startsAt, endsAt, now),
         blockId: block?.id ?? null,
         blockReason: block?.reason ?? null,
       });

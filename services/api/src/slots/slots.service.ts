@@ -47,8 +47,8 @@ export class SlotsService {
         `Pick a date from today up to ${BOOKING_WINDOW_DAYS} days ahead`,
       );
     }
-    await this.requireBookingLength(court.id, query);
-    const calendar = await this.loadCalendar(court.id, court.timezone, query.date, query.date);
+    await this.requireBookingLength(court.id, query.minutes, query.sport);
+    const calendar = await this.calendar(court.id, court.timezone, query.date, query.date, now);
     const packagePrice = await packagePriceFor(this.db, court.id, query.minutes, query.sport);
     const slots = slotsForDay(calendar, query.date, query.minutes, packagePrice, now).filter(
       (slot) => slot.status !== "PAST",
@@ -65,8 +65,8 @@ export class SlotsService {
   async grid(actor: Actor, courtId: string, query: GridQuery): Promise<CourtGrid> {
     const court = await this.venues.getCourtAccess(actor, courtId, ANY_MEMBER);
     const to = addDays(query.from, query.days - 1);
-    const calendar = await this.loadCalendar(court.id, court.timezone, query.from, to);
     const now = this.clock.now();
+    const calendar = await this.calendar(court.id, court.timezone, query.from, to, now);
     return {
       courtId: court.id,
       timezone: court.timezone,
@@ -92,30 +92,31 @@ export class SlotsService {
     const now = this.clock.now();
     const today = utcToLocal(now, timezone).slice(0, 10);
     const days = options.days ?? 7;
-    const calendar = await this.loadCalendar(courtId, timezone, today, addDays(today, days - 1));
+    const calendar = await this.calendar(courtId, timezone, today, addDays(today, days - 1), now);
     const packagePrice = await packagePriceFor(this.db, courtId, minutes, options.sport);
     return nextFree(calendar, today, minutes, packagePrice, now, { ...options, days });
   }
 
-  private async requireBookingLength(courtId: string, query: SlotsQuery): Promise<void> {
+  async requireBookingLength(courtId: string, minutes: number, sport?: string): Promise<void> {
     const lengths = await this.db
       .selectFrom("court_duration")
       .select("sport")
       .where("court_id", "=", courtId)
-      .where("minutes", "=", query.minutes)
+      .where("minutes", "=", minutes)
       .execute();
-    if (!lengths.some((d) => d.sport === null || d.sport === query.sport)) {
+    if (!lengths.some((d) => d.sport === null || d.sport === sport)) {
       throw new BadRequestException(
-        `${describeMinutes(query.minutes)} isn't a booking length of this court`,
+        `${describeMinutes(minutes)} isn't a booking length of this court`,
       );
     }
   }
 
-  private async loadCalendar(
+  async calendar(
     courtId: string,
     timezone: string,
     from: string,
     to: string,
+    now: Date,
   ): Promise<CourtCalendar> {
     const { start_step_minutes } = await this.db
       .selectFrom("court")
@@ -141,12 +142,29 @@ export class SlotsService {
       .where("court_id", "=", courtId)
       .where(sql<boolean>`during && tstzrange(${rangeStart}, ${rangeEnd}, '[)')`)
       .execute();
+    const bookings = await this.db
+      .selectFrom("booking")
+      .select([
+        sql<Date>`lower(during)`.as("startsAt"),
+        sql<Date>`upper(during)`.as("endsAt"),
+        sql<"HELD" | "CONFIRMED">`status::text`.as("status"),
+      ])
+      .where("court_id", "=", courtId)
+      .where(sql<boolean>`during && tstzrange(${rangeStart}, ${rangeEnd}, '[)')`)
+      .where((eb) =>
+        eb.or([
+          eb("status", "=", "CONFIRMED"),
+          eb.and([eb("status", "=", "HELD"), eb("hold_expires_at", ">", now)]),
+        ]),
+      )
+      .execute();
     return {
       timezone,
       startStepMinutes: start_step_minutes,
       windows,
       book: await loadPriceBook(this.db, courtId),
       blocks,
+      bookings,
     };
   }
 }
