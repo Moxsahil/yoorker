@@ -12,10 +12,18 @@ import { useBreadcrumbLabel } from "@/kit/shell/breadcrumbs";
 import { PageHeader } from "@/kit/ui-patterns/page-header";
 import { Widget, WidgetHeader } from "@/kit/widgets/widget";
 import { api, ApiError } from "@/lib/api";
+import {
+  addressAt,
+  findAddress,
+  hasGoogleMaps,
+  type AddressFields,
+  type FoundPlace,
+} from "@/lib/google-maps";
 import { useAllVenues, useVenueChoice } from "@/lib/session";
 import { cn } from "@/lib/utils";
 import type { Organisation, Venue } from "@/lib/yoorker";
 
+import { AddressSearch } from "./address-search";
 import { VenueMap } from "./venue-map";
 
 const AMENITIES = [
@@ -46,33 +54,7 @@ const parseCoords = (text: string) => {
   return Math.abs(lat) <= 90 && Math.abs(lng) <= 180 ? { lat, lng } : null;
 };
 
-interface Place {
-  lat: string;
-  lon: string;
-  address?: Record<string, string>;
-}
-
-/**
- * Address lookup for the demo, through OpenStreetMap's free geocoder. The real dashboard does
- * this with Google Places autocomplete on the same Google Cloud key as the maps.
- */
-async function lookup(url: string): Promise<Place | null> {
-  const res = await fetch(url, { headers: { "Accept-Language": "en" } });
-  if (!res.ok) throw new Error("The address lookup is busy. Try again.");
-  const data = (await res.json()) as Place | Place[];
-  return Array.isArray(data) ? (data[0] ?? null) : data;
-}
-
-const placeFields = (place: Place) => {
-  const a = place.address ?? {};
-  return {
-    coords: `${Number(place.lat).toFixed(6)}, ${Number(place.lon).toFixed(6)}`,
-    city: a.city ?? a.town ?? a.state_district ?? a.county ?? "",
-    state: a.state ?? "",
-    pincode: (a.postcode ?? "").replace(/\s/g, ""),
-    locality: a.suburb ?? a.neighbourhood ?? a.quarter ?? "",
-  };
-};
+const pin = (lat: number, lng: number) => `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
 
 export function NewVenuePage() {
   useBreadcrumbLabel("Add venue");
@@ -102,23 +84,31 @@ export function NewVenuePage() {
   const finalSlug = slug ?? slugify(name);
   const point = parseCoords(coords);
 
-  const apply = (place: Place) => {
-    const found = placeFields(place);
-    setCoords(found.coords);
+  const fillEmpty = (found: AddressFields) => {
+    setAddress((v) => v || found.address);
+    setLocality((v) => v || found.locality);
     setCity((v) => v || found.city);
     setState((v) => v || found.state);
     setPincode((v) => v || found.pincode);
-    setLocality((v) => v || found.locality);
   };
 
-  const findAddress = async () => {
+  const pickPlace = (found: FoundPlace) => {
+    setCoords(pin(found.lat, found.lng));
+    setAddress(found.address);
+    setLocality(found.locality);
+    setCity(found.city);
+    setState(found.state);
+    setPincode(found.pincode);
+    if (found.name) setName((v) => v || found.name);
+  };
+
+  const locateAddress = async () => {
     setFinding("address");
     try {
-      const q = [address, locality, city, state, pincode, "India"].filter(Boolean).join(", ");
-      const place = await lookup(
-        `https://nominatim.openstreetmap.org/search?format=jsonv2&addressdetails=1&limit=1&countrycodes=in&q=${encodeURIComponent(q)}`,
+      const found = await findAddress(
+        [address, locality, city, state, pincode].filter(Boolean).join(", "),
       );
-      if (!place) {
+      if (!found) {
         toast.add({
           type: "error",
           title: "Couldn't find that address",
@@ -126,9 +116,10 @@ export function NewVenuePage() {
         });
         return;
       }
-      apply(place);
+      setCoords(pin(found.lat, found.lng));
+      fillEmpty(found);
     } catch (error) {
-      toast.add({ type: "error", title: String((error as Error).message) });
+      toast.add({ type: "error", title: (error as Error).message });
     } finally {
       setFinding(null);
     }
@@ -139,19 +130,14 @@ export function NewVenuePage() {
     setFinding("here");
     navigator.geolocation.getCurrentPosition(
       async ({ coords: here }) => {
-        setCoords(`${here.latitude.toFixed(6)}, ${here.longitude.toFixed(6)}`);
+        setCoords(pin(here.latitude, here.longitude));
         try {
-          const place = await lookup(
-            `https://nominatim.openstreetmap.org/reverse?format=jsonv2&addressdetails=1&lat=${here.latitude}&lon=${here.longitude}`,
-          );
-          if (place)
-            apply({
-              ...place,
-              lat: String(here.latitude),
-              lon: String(here.longitude),
-            });
+          if (hasGoogleMaps) {
+            const found = await addressAt(here.latitude, here.longitude);
+            if (found) fillEmpty(found);
+          }
         } catch {
-          // The pin is set; the city fields can be typed.
+          // The pin is set; the address can still be typed.
         } finally {
           setFinding(null);
         }
@@ -161,7 +147,7 @@ export function NewVenuePage() {
         toast.add({
           type: "error",
           title: "Couldn't read your location",
-          description: "Allow location access, or find the address instead.",
+          description: "Allow location access, or search for the venue instead.",
         });
       },
       { enableHighAccuracy: true, timeout: 10_000 },
@@ -310,6 +296,7 @@ export function NewVenuePage() {
             <Widget>
               <WidgetHeader title="Address" />
               <div className="flex flex-col gap-4 px-(--card-spacing)">
+                {hasGoogleMaps && <AddressSearch onPick={pickPlace} />}
                 <div className="flex flex-col gap-2">
                   <Label htmlFor="v-address">Street address</Label>
                   <Input
@@ -412,15 +399,17 @@ export function NewVenuePage() {
                     No pin yet
                   </div>
                 )}
-                <div className="grid grid-cols-2 gap-2">
-                  <Button
-                    variant="outline"
-                    onClick={findAddress}
-                    disabled={!address.trim() || finding !== null}
-                  >
-                    <SearchIcon data-icon="inline-start" />
-                    {finding === "address" ? "Finding…" : "Find address"}
-                  </Button>
+                <div className={cn("grid gap-2", hasGoogleMaps && "grid-cols-2")}>
+                  {hasGoogleMaps && (
+                    <Button
+                      variant="outline"
+                      onClick={locateAddress}
+                      disabled={!address.trim() || finding !== null}
+                    >
+                      <SearchIcon data-icon="inline-start" />
+                      {finding === "address" ? "Finding…" : "Find address"}
+                    </Button>
+                  )}
                   <Button variant="outline" onClick={useHere} disabled={finding !== null}>
                     <LocateFixedIcon data-icon="inline-start" />
                     {finding === "here" ? "Locating…" : "I'm at the venue"}
