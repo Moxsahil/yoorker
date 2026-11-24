@@ -1,5 +1,6 @@
 export * from "./auth";
 export * from "./blocks";
+export * from "./bookings";
 export * from "./members";
 export * from "./photos";
 export * from "./pricing";

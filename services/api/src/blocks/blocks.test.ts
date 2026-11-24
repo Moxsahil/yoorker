@@ -6,6 +6,7 @@ import {
   venueSchema,
   type Block,
 } from "@yoorker/contracts";
+import { sql } from "kysely";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { localDateTimeToUtc, utcToLocal } from "../schedule/local-time";
 import { createTestApp, type TestApp } from "../testing/test-app";
@@ -132,6 +133,34 @@ describe("blocks (TURF-203)", () => {
     }).expect(409);
     expect(res.body.message).toBe("Already blocked at that time: Turf 1");
     expect((await list(turf2).expect(200)).body).toEqual([]);
+  });
+
+  it("refuses to block time a booking holds, and blocks nothing (TURF-301)", async () => {
+    await t.db
+      .insertInto("booking")
+      .values({
+        court_id: turf2,
+        during: sql<string>`tstzrange('2027-01-06T12:30Z', '2027-01-06T13:30Z', '[)')`,
+        minutes: 60,
+        sport: "FOOTBALL",
+        source: "WALK_IN",
+        status: "CONFIRMED",
+        player_name: "Walk-in",
+        price_paise: 120_000,
+        price_source: "HOURLY",
+      })
+      .execute();
+    const res = await create({
+      from: "2027-01-06T17:00",
+      to: "2027-01-06T20:00",
+      reason: "MAINTENANCE",
+      allCourts: true,
+    }).expect(409);
+    expect(res.body.message).toBe(
+      "A booking holds that time. Cancel the booking first, then block the court.",
+    );
+    const turf1Blocks = await list(turf1, "from=2027-01-06&to=2027-01-07").expect(200);
+    expect(turf1Blocks.body).toEqual([]);
   });
 
   it("allows a block that starts exactly when another ends", async () => {
