@@ -1,4 +1,11 @@
-import { Global, Inject, Injectable, Module, type OnApplicationShutdown } from "@nestjs/common";
+import {
+  Global,
+  Inject,
+  Injectable,
+  Logger,
+  Module,
+  type OnApplicationShutdown,
+} from "@nestjs/common";
 import { createDb, type Db } from "@yoorker/db";
 import { ENV, type Env } from "../config/env";
 
@@ -16,7 +23,17 @@ class DatabaseShutdown implements OnApplicationShutdown {
 @Global()
 @Module({
   providers: [
-    { provide: DB, inject: [ENV], useFactory: (env: Env) => createDb(env.DATABASE_URL) },
+    {
+      provide: DB,
+      inject: [ENV],
+      useFactory: (env: Env) => {
+        const logger = new Logger("Database");
+        return createDb(env.DATABASE_URL, {
+          onConnectionError: (error) =>
+            logger.warn(`A database connection dropped and will be replaced: ${error.message}`),
+        });
+      },
+    },
     DatabaseShutdown,
   ],
   exports: [DB],
