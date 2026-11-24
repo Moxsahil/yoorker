@@ -147,6 +147,11 @@ export class BlocksService {
       if ((err as { constraint?: string }).constraint === "blackout_no_overlap") {
         throw new ConflictException("Already blocked at that time");
       }
+      if ((err as { code?: string }).code === "YK002") {
+        throw new ConflictException(
+          "A booking holds that time. Cancel the booking first, then block the court.",
+        );
+      }
       throw err;
     }
   }

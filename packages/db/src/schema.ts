@@ -48,6 +48,40 @@ export type PriceUnit = (typeof PRICE_UNITS)[number];
 export const BLOCK_REASONS = ["MAINTENANCE", "PRIVATE_EVENT", "HOLIDAY", "OTHER"] as const;
 export type BlockReason = (typeof BLOCK_REASONS)[number];
 
+export const BOOKING_STATUSES = [
+  "HELD",
+  "CONFIRMED",
+  "COMPLETED",
+  "CANCELLED",
+  "NO_SHOW",
+  "EXPIRED",
+] as const;
+export type BookingStatus = (typeof BOOKING_STATUSES)[number];
+
+export const PAYMENT_STATUSES = ["NOT_PAID", "PAID", "REFUNDED"] as const;
+export type PaymentStatus = (typeof PAYMENT_STATUSES)[number];
+
+export const BOOKING_SOURCES = ["ONLINE", "WALK_IN", "PHONE"] as const;
+export type BookingSource = (typeof BOOKING_SOURCES)[number];
+
+export const PRICE_SOURCES = ["BOOKING_RULE", "PACKAGE", "HOURLY"] as const;
+export type PriceSource = (typeof PRICE_SOURCES)[number];
+
+export const BOOKING_MOVES: Record<BookingStatus, readonly BookingStatus[]> = {
+  HELD: ["CONFIRMED", "CANCELLED", "EXPIRED"],
+  CONFIRMED: ["COMPLETED", "CANCELLED", "NO_SHOW"],
+  COMPLETED: [],
+  CANCELLED: [],
+  NO_SHOW: [],
+  EXPIRED: [],
+};
+
+export const PAYMENT_MOVES: Record<PaymentStatus, readonly PaymentStatus[]> = {
+  NOT_PAID: ["PAID"],
+  PAID: ["REFUNDED"],
+  REFUNDED: [],
+};
+
 export const IDENTITY_PROVIDERS = ["GOOGLE"] as const;
 export type IdentityProvider = (typeof IDENTITY_PROVIDERS)[number];
 
@@ -245,6 +279,30 @@ export interface UserIdentityTable {
   last_used_at: Generated<Date>;
 }
 
+export interface BookingTable {
+  id: Generated<string>;
+  number: ColumnType<string, never, never>;
+  court_id: string;
+  during: string;
+  minutes: number;
+  sport: string;
+  status: Generated<BookingStatus>;
+  payment_status: Generated<PaymentStatus>;
+  source: BookingSource;
+  hold_expires_at: Nullable<Date>;
+  player_id: Nullable<string>;
+  player_name: Nullable<string>;
+  player_phone: Nullable<string>;
+  price_paise: number;
+  price_source: PriceSource;
+  price_rule_name: Nullable<string>;
+  idempotency_key: Nullable<string>;
+  created_by: Nullable<string>;
+  created_at: CreatedAt;
+  updated_at: UpdatedAt;
+  status_changed_at: CreatedAt;
+}
+
 export interface Database {
   app_user: AppUserTable;
   organisation: OrganisationTable;
@@ -258,6 +316,7 @@ export interface Database {
   court_duration: CourtDurationTable;
   price_rule: PriceRuleTable;
   blackout: BlackoutTable;
+  booking: BookingTable;
   audit_log: AuditLogTable;
   otp_challenge: OtpChallengeTable;
   user_session: UserSessionTable;

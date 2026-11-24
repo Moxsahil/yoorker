@@ -1,12 +1,23 @@
 import {
   auditEntrySchema,
+  bookingSourceSchema,
+  bookingStatusSchema,
   courtSchema,
   courtSurfaceSchema,
   organisationSchema,
+  paymentStatusSchema,
+  priceSourceSchema,
   sportSchema,
   venueSchema,
 } from "@yoorker/contracts";
-import { COURT_SURFACES, SPORTS } from "@yoorker/db";
+import {
+  BOOKING_SOURCES,
+  BOOKING_STATUSES,
+  COURT_SURFACES,
+  PAYMENT_STATUSES,
+  PRICE_SOURCES,
+  SPORTS,
+} from "@yoorker/db";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { createTestApp, type TestApp } from "../testing/test-app";
 
@@ -58,6 +69,10 @@ describe("contracts match the database", () => {
   it("uses the same sports and surfaces", () => {
     expect(sportSchema.options).toEqual([...SPORTS]);
     expect(courtSurfaceSchema.options).toEqual([...COURT_SURFACES]);
+    expect(bookingStatusSchema.options).toEqual([...BOOKING_STATUSES]);
+    expect(paymentStatusSchema.options).toEqual([...PAYMENT_STATUSES]);
+    expect(bookingSourceSchema.options).toEqual([...BOOKING_SOURCES]);
+    expect(priceSourceSchema.options).toEqual([...PRICE_SOURCES]);
   });
 });
 
