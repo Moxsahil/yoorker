@@ -6,8 +6,11 @@ import {
   organisationSchema,
   venueSchema,
 } from "@yoorker/contracts";
+import type { PgBoss } from "pg-boss";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
+import { JOBS } from "../jobs/jobs.module";
 import { createTestApp, type TestApp } from "../testing/test-app";
+import { HoldExpiry, SWEEP_HOLDS } from "./hold-expiry";
 
 let t: TestApp;
 let owner: { userId: string; cookie: string };
@@ -22,6 +25,8 @@ let keys = 0;
 // The test clock starts on Monday 14 Dec 2026 at 06:00 IST.
 const MONDAY = "2026-12-14";
 const TUESDAY = "2026-12-15";
+const WEDNESDAY = "2026-12-16";
+const SIX_MINUTES_LATER = "2026-12-14T00:36:00Z";
 
 const key = () => `test-key-${++keys}`;
 
@@ -302,5 +307,54 @@ describe("cancelling a hold", () => {
     expect(bookingSchema.parse(res.body).status).toBe("CANCELLED");
     await t.http().post(`/bookings/${id}/cancel`).set("Cookie", player.cookie).expect(409);
     await hold({ date: TUESDAY, start: "12:00" }, rival.cookie).expect(201);
+  });
+});
+
+describe("expiring holds (TURF-303)", () => {
+  const status = async (id: string) =>
+    bookingSchema.parse(
+      (await t.http().get(`/bookings/${id}`).set("Cookie", player.cookie).expect(200)).body,
+    ).status;
+
+  it("lets the next player take a slot whose hold ran out, at once", async () => {
+    const { id } = bookingSchema.parse(
+      (await hold({ date: WEDNESDAY, start: "10:00" }).expect(201)).body,
+    );
+    t.clock.set(SIX_MINUTES_LATER);
+    await hold({ date: WEDNESDAY, start: "10:00" }, rival.cookie).expect(201);
+    expect(await status(id)).toBe("EXPIRED");
+  });
+
+  it("keeps a hold that is still inside its 5 minutes", async () => {
+    await hold({ date: WEDNESDAY, start: "11:00" }).expect(201);
+    t.clock.set("2026-12-14T00:34:00Z");
+    await hold({ date: WEDNESDAY, start: "11:00" }, rival.cookie).expect(409);
+  });
+
+  it("sweeps every hold that ran out, and only those", async () => {
+    const stale = bookingSchema.parse(
+      (await hold({ date: WEDNESDAY, start: "13:00" }).expect(201)).body,
+    );
+    t.clock.set(SIX_MINUTES_LATER);
+    const fresh = bookingSchema.parse(
+      (await hold({ date: WEDNESDAY, start: "15:00" }).expect(201)).body,
+    );
+    expect(await t.app.get(HoldExpiry).sweep()).toBeGreaterThanOrEqual(1);
+    expect(await status(stale.id)).toBe("EXPIRED");
+    expect(await status(fresh.id)).toBe("HELD");
+  });
+
+  it("runs the sweep from the job queue, every minute", async () => {
+    const boss = t.app.get<PgBoss>(JOBS);
+    expect((await boss.getSchedules()).map((s) => [s.name, s.cron])).toContainEqual([
+      SWEEP_HOLDS,
+      "* * * * *",
+    ]);
+    const { id } = bookingSchema.parse(
+      (await hold({ date: WEDNESDAY, start: "17:00" }).expect(201)).body,
+    );
+    t.clock.set(SIX_MINUTES_LATER);
+    await boss.send(SWEEP_HOLDS);
+    await expect.poll(() => status(id), { timeout: 15_000, interval: 250 }).toBe("EXPIRED");
   });
 });

@@ -61,7 +61,8 @@ supply by blocking slots and can cancel with an automatic refund.
 
 1. Player picks slot → `POST /bookings` with idempotency key.
 2. Insert `HELD` with `hold_expires_at = now() + 5 min`; exclusion constraint rejects overlap → 409.
-3. pg-boss job `hold.expire` is queued in the same transaction.
+3. A hold that runs out is marked `EXPIRED`: at once when a new booking needs its time (in the
+   same transaction as the insert), and otherwise by the pg-boss job `hold.sweep` every minute.
 4. Booking states: HELD → CONFIRMED → COMPLETED | CANCELLED | NO_SHOW (HELD → EXPIRED).
 5. Staff walk-ins are created CONFIRMED with `source = WALK_IN`; their payment stays not paid
    until cash is recorded.

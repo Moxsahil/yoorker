@@ -148,25 +148,35 @@ export class BookingsService {
     if (!price) throw new BadRequestException("This time has no price, so it can't be booked");
 
     try {
-      const { id } = await this.db
-        .insertInto("booking")
-        .values({
-          court_id: court.id,
-          during: sql<string>`tstzrange(${slot.startsAt}, ${slot.endsAt}, '[)')`,
-          minutes: input.minutes,
-          sport,
-          source: "ONLINE",
-          hold_expires_at: new Date(now.getTime() + HOLD_MINUTES * 60_000),
-          player_id: actor.userId,
-          price_paise: price.pricePaise,
-          price_source: price.source,
-          price_rule_name:
-            price.ruleName ?? (price.parts.length === 1 ? price.parts[0]!.ruleName : null),
-          idempotency_key: input.idempotencyKey,
-          created_by: actor.userId,
-        })
-        .returning("id")
-        .executeTakeFirstOrThrow();
+      const { id } = await this.db.transaction().execute(async (trx) => {
+        await trx
+          .updateTable("booking")
+          .set({ status: "EXPIRED" })
+          .where("court_id", "=", court.id)
+          .where("status", "=", "HELD")
+          .where("hold_expires_at", "<=", now)
+          .where(sql<boolean>`during && tstzrange(${slot.startsAt}, ${slot.endsAt}, '[)')`)
+          .execute();
+        return trx
+          .insertInto("booking")
+          .values({
+            court_id: court.id,
+            during: sql<string>`tstzrange(${slot.startsAt}, ${slot.endsAt}, '[)')`,
+            minutes: input.minutes,
+            sport,
+            source: "ONLINE",
+            hold_expires_at: new Date(now.getTime() + HOLD_MINUTES * 60_000),
+            player_id: actor.userId,
+            price_paise: price.pricePaise,
+            price_source: price.source,
+            price_rule_name:
+              price.ruleName ?? (price.parts.length === 1 ? price.parts[0]!.ruleName : null),
+            idempotency_key: input.idempotencyKey,
+            created_by: actor.userId,
+          })
+          .returning("id")
+          .executeTakeFirstOrThrow();
+      });
       return { booking: toBooking(await this.row(id)), created: true };
     } catch (err) {
       const { code, constraint } = err as { code?: string; constraint?: string };
