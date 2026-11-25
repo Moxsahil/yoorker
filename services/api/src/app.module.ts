@@ -5,6 +5,7 @@ import { BookingsModule } from "./bookings/bookings.module";
 import { LoggerModule } from "./common/logger.module";
 import { ConfigModule } from "./config/config.module";
 import { DatabaseModule } from "./database/database.module";
+import { EventsModule } from "./events/events.module";
 import { HealthController } from "./health/health.controller";
 import { JobsModule } from "./jobs/jobs.module";
 import { MembersModule } from "./members/members.module";
@@ -31,6 +32,7 @@ import { VenuesModule } from "./venues/venues.module";
     BlocksModule,
     SlotsModule,
     BookingsModule,
+    EventsModule,
   ],
   controllers: [HealthController],
 })

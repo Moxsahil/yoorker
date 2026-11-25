@@ -61,3 +61,14 @@ export const courtGridSchema = z.object({
   days: z.array(z.object({ date: z.iso.date(), cells: z.array(gridCellSchema) })),
 });
 export type CourtGrid = z.infer<typeof courtGridSchema>;
+
+export const SLOT_CHANGED = "slot_changed";
+
+export const slotChangedSchema = z.object({
+  id: z.string(),
+  courtId: z.uuid(),
+  venueId: z.uuid(),
+  from: z.string(),
+  to: z.string(),
+});
+export type SlotChanged = z.infer<typeof slotChangedSchema>;
