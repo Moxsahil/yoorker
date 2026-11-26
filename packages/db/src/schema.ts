@@ -303,6 +303,15 @@ export interface BookingTable {
   status_changed_at: CreatedAt;
 }
 
+export interface OutboxTable {
+  /** bigint: node-postgres returns int8 as a string. */
+  id: Generated<string>;
+  event: string;
+  payload: ColumnType<unknown, string, never>;
+  created_at: CreatedAt;
+  published_at: Nullable<Date>;
+}
+
 export interface Database {
   app_user: AppUserTable;
   organisation: OrganisationTable;
@@ -317,6 +326,7 @@ export interface Database {
   price_rule: PriceRuleTable;
   blackout: BlackoutTable;
   booking: BookingTable;
+  outbox: OutboxTable;
   audit_log: AuditLogTable;
   otp_challenge: OtpChallengeTable;
   user_session: UserSessionTable;

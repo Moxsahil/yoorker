@@ -94,7 +94,13 @@ two-phase PostGIS query (radius + sport filter, then next free slots). See RFC-0
 
 ## Live updates
 
-Booking changes `NOTIFY slot_changed`; the API fans out over SSE to open venue pages.
+Triggers on `booking` and `blackout` write a `slot_changed` row to the `outbox` table in the same
+transaction as the change, so every writer emits events and a rolled-back change emits none. A
+relay in the API publishes unpublished rows about once a second with `NOTIFY slot_changed`
+(`FOR UPDATE SKIP LOCKED`, so several API servers never publish a row twice) and marks them
+published; a daily pg-boss job deletes published rows after 7 days. Every API server `LISTEN`s
+and streams the events of one venue over SSE at `GET /venues/:id/events`, with a heartbeat every
+25 seconds. Each event carries its outbox id, so repeats can be told apart.
 
 ## Environments
 
